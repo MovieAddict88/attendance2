@@ -37,16 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="dashboard-container">
-        <div class="sidebar">
-            <h2>Admin Panel</h2>
-            <ul>
-                <li><a href="dashboard.php">Dashboard</a></li>
-                <li><a href="manage_teachers.php" class="active">Manage Teachers</a></li>
-                <li><a href="manage_students.php">Manage Students</a></li>
-                <li><a href="manage_parents.php">Manage Parents</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            </ul>
-        </div>
+        <?php include 'includes/header.php'; ?>
         <div class="main-content">
             <div class="header">
                 <h3>Add New Teacher</h3>

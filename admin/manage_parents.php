@@ -23,16 +23,7 @@ $result = $conn->query($sql);
 </head>
 <body>
     <div class="dashboard-container">
-        <div class="sidebar">
-            <h2>Admin Panel</h2>
-            <ul>
-                <li><a href="dashboard.php">Dashboard</a></li>
-                <li><a href="manage_teachers.php">Manage Teachers</a></li>
-                <li><a href="manage_students.php">Manage Students</a></li>
-                <li><a href="manage_parents.php" class="active">Manage Parents</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            </ul>
-        </div>
+        <?php include 'includes/header.php'; ?>
         <div class="main-content">
             <div class="header">
                 <h3>Manage Parents</h3>
