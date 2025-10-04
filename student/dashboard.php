@@ -25,17 +25,11 @@ $student = $result->fetch_assoc();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <div class="dashboard-container">
-        <div class="sidebar">
-            <h2>Student Panel</h2>
-            <ul>
-                <li><a href="dashboard.php" class="active">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            </ul>
-        </div>
+        <?php include 'includes/header.php'; ?>
         <div class="main-content">
             <div class="header">
                 <h3>Welcome, <?php echo $_SESSION['student_name']; ?>!</h3>
