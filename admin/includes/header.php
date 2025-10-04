@@ -1,12 +1,12 @@
 <?php $page = basename($_SERVER['PHP_SELF'], ".php"); ?>
+<div class="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
 <div class="sidebar">
     <div class="sidebar-header">
         <h2>Admin Panel</h2>
-        <div class="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
     </div>
     <ul>
         <li><a href="dashboard.php" class="<?php if($page == 'dashboard') echo 'active'; ?>">Dashboard</a></li>
