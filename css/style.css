@@ -271,23 +271,24 @@ table tr:hover {
         width: 100%;
         height: auto;
         position: relative;
-        flex-direction: row;
-        justify-content: space-around;
-        align-items: center;
         padding: 10px;
+        box-sizing: border-box;
     }
     .sidebar h2 {
-        margin: 0;
-        font-size: 1.2em;
+       display: none;
     }
     .sidebar ul {
-        display: flex;
-        gap: 10px;
-        margin: 0;
+        display: block;
+        text-align: center;
+    }
+    .sidebar ul li {
+        display: block;
+        margin-bottom: 5px;
     }
     .sidebar ul li a {
-        padding: 8px 10px;
+        padding: 10px;
         margin-bottom: 0;
+        display: block;
     }
     .dashboard-cards {
         flex-direction: column;
