@@ -1,0 +1,232 @@
+/* --- Global Styles & Variables --- */
+:root {
+    --primary-color: #3498db;        /* A modern blue */
+    --primary-color-dark: #2980b9;
+    --secondary-color: #2ecc71;      /* A fresh green for success */
+    --danger-color: #e74c3c;         /* A clear red for errors */
+    --light-color: #fff;
+    --dark-color: #2c3e50;           /* A deep, soft black */
+    --grey-color: #95a5a6;
+    --light-grey-color: #ecf0f1;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --header-height: 60px;
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 80px;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    background-color: var(--light-grey-color);
+    color: var(--dark-color);
+    display: flex;
+    font-size: 16px;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-color-dark);
+}
+
+/* --- Layout --- */
+.wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--dark-color);
+    color: var(--light-color);
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transition: width 0.3s ease;
+    z-index: 1000;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.header {
+    height: var(--header-height);
+    background: var(--light-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.page-content {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+/* --- Header --- */
+.header .menu-toggle {
+    display: none; /* Hidden by default, shown on smaller screens */
+    font-size: 24px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--dark-color);
+}
+
+.header .school-info {
+    font-weight: bold;
+    color: var(--dark-color);
+}
+
+.header .user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.header .user-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+/* --- Sidebar --- */
+.sidebar-header {
+    padding: 15px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header .app-logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--light-color);
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: var(--light-grey-color);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.sidebar-nav li a:hover,
+.sidebar-nav li a.active {
+    background: var(--primary-color);
+    color: var(--light-color);
+}
+
+.sidebar-nav li a i {
+    margin-right: 15px;
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+
+/* --- Core Components --- */
+.card {
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    border-bottom: 1px solid var(--light-grey-color);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.btn {
+    background-color: var(--primary-color);
+    color: var(--light-color);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.btn-danger { background-color: var(--danger-color); }
+.btn-secondary { background-color: var(--secondary-color); }
+
+/* --- Responsive Design --- */
+
+/* Tablet view */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: var(--sidebar-width-collapsed);
+    }
+    .sidebar .sidebar-nav span {
+        display: none;
+    }
+    .sidebar .sidebar-nav li a i {
+        margin-right: 0;
+    }
+    .sidebar-header .app-logo {
+        font-size: 18px;
+    }
+    .main-content {
+        width: calc(100% - var(--sidebar-width-collapsed));
+        margin-left: var(--sidebar-width-collapsed);
+    }
+}
+
+/* Mobile view */
+@media (max-width: 768px) {
+    .sidebar {
+        left: calc(-1 * var(--sidebar-width)); /* Hide sidebar off-screen */
+        z-index: 1001; /* Ensure it's above the header */
+    }
+    .sidebar.is-open {
+        left: 0;
+        width: var(--sidebar-width); /* Full width when open */
+    }
+    .sidebar.is-open .sidebar-nav span {
+        display: inline;
+    }
+    .sidebar.is-open .sidebar-nav li a i {
+        margin-right: 15px;
+    }
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+    }
+    .header .menu-toggle {
+        display: block; /* Show hamburger menu */
+    }
+    .page-content {
+        padding: 15px;
+    }
+}

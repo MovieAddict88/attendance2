@@ -1,0 +1,12 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Redirect all requests to non-existent files/directories to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Block access to .htaccess files
+<Files .htaccess>
+  Require all denied
+</Files>

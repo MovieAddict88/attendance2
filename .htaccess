@@ -1,0 +1,3 @@
+# Block all incoming requests except for the /public folder
+RewriteEngine On
+RewriteRule !^public/ - [F,L]
