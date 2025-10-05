@@ -15,23 +15,6 @@ if (!isset($_GET['section_id']) || !isset($_GET['subject_id'])) {
 $section_id = $_GET['section_id'];
 $subject_id = $_GET['subject_id'];
 
-// Handle adding students
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_students'])) {
-    if (!empty($_POST['student_ids'])) {
-        $student_ids = $_POST['student_ids'];
-        $sql_update_student = "UPDATE students SET section_id = ? WHERE id = ?";
-        $stmt_update = $conn->prepare($sql_update_student);
-
-        foreach ($student_ids as $student_id) {
-            $stmt_update->bind_param("ii", $section_id, $student_id);
-            $stmt_update->execute();
-        }
-
-        // Redirect to the same page to prevent form resubmission
-        header("Location: manage_class.php?section_id=$section_id&subject_id=$subject_id&message=students_added");
-        exit();
-    }
-}
 
 // Fetch class details
 $sql_class_details = "
@@ -370,43 +353,10 @@ if (!empty($week_dates)) {
                 </div>
 
                 <div class="add-students-form" style="margin-top: 30px;">
-                    <h4>Add Students to Class</h4>
+                    <h4>Add New Student to Class</h4>
                     <div style="margin-bottom: 20px;">
                         <a href="add_student.php?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" class="btn" style="width: auto; display: inline-block; text-decoration: none; padding: 10px 15px;">Add New Student</a>
                     </div>
-                    <?php if ($result_unassigned_students->num_rows > 0): ?>
-                        <form action="manage_class.php?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" method="post">
-                            <div class="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th></th>
-                                            <th>ID Number</th>
-                                            <th>Full Name</th>
-                                            <th>Address</th>
-                                            <th>Email</th>
-                                            <th>Contact Number</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while($row = $result_unassigned_students->fetch_assoc()): ?>
-                                            <tr>
-                                                <td data-label="Select"><input type="checkbox" name="student_ids[]" value="<?php echo $row['id']; ?>"></td>
-                                                <td data-label="ID Number"><?php echo $row['id']; ?></td>
-                                                <td data-label="Full Name"><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                                <td data-label="Address"><?php echo htmlspecialchars($row['address']); ?></td>
-                                                <td data-label="Email"><?php echo htmlspecialchars($row['email']); ?></td>
-                                                <td data-label="Contact Number"><?php echo htmlspecialchars($row['phone']); ?></td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <button type="submit" name="add_students" class="button">Add Selected Students</button>
-                        </form>
-                    <?php else: ?>
-                        <p>No students available to add. All students are assigned to a section.</p>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>

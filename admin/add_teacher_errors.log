@@ -1,2 +1,0 @@
-Cannot add or update a child row: a foreign key constraint fails (`school_management`.`teacher_assignments`, CONSTRAINT `teacher_assignments_ibfk_2` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`) ON DELETE CASCADE)
-Duplicate entry 'teacher@test.com' for key 'teachers.email'

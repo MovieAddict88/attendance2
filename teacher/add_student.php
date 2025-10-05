@@ -39,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt_insert->bind_param("sssssi", $full_name, $email, $password, $address, $phone, $section_id);
 
             if ($stmt_insert->execute()) {
-                // Redirect to manage_class, but which one?
-                // For now, redirect to dashboard with a success message.
-                header("Location: dashboard.php?message=student_added");
+                // Get subject_id from the form action URL for the redirect
+                $subject_id_redirect = isset($_GET['subject_id']) ? $_GET['subject_id'] : '';
+                header("Location: manage_class.php?section_id={$section_id}&subject_id={$subject_id_redirect}&message=student_added");
                 exit();
             } else {
                 $error = "Error adding student. Please try again.";
@@ -95,7 +95,7 @@ $subject_id_return = isset($_GET['subject_id']) ? $_GET['subject_id'] : '';
                             <label for="phone">Contact Number</label>
                             <input type="text" id="phone" name="phone">
                         </div>
-                        <input type="hidden" name="section_id" value=""> <!-- Student is unassigned by default -->
+                        <input type="hidden" name="section_id" value="<?php echo htmlspecialchars($section_id_return); ?>">
                         <button type="submit" class="btn">Add Student</button>
                         <a href="manage_class.php?section_id=<?php echo $section_id_return; ?>&subject_id=<?php echo $subject_id_return; ?>" class="btn-cancel">Cancel</a>
                     </form>
