@@ -1,0 +1,54 @@
+POST Data: Array
+(
+    [student_id] => 7
+    [last_name] => StudentLastName1759704825
+    [first_name] => UpdatedFirstName
+    [middle_name] =>
+    [sex] => M
+    [email] => student1759704825@test.com
+    [address] =>
+    [phone] =>
+)
+
+POST Data: Array
+(
+    [student_id] => 8
+    [last_name] => StudentLastName1759704897
+    [first_name] => UpdatedFirstName
+    [middle_name] =>
+    [sex] => M
+    [email] => student1759704897@test.com
+    [address] =>
+    [phone] =>
+)
+
+Attempting to update student_id: 8
+Affected Rows: 1
+POST Data: Array
+(
+    [student_id] => 9
+    [last_name] => StudentLastName1759704961
+    [first_name] => UpdatedFirstName
+    [middle_name] =>
+    [sex] => M
+    [email] => student1759704961@test.com
+    [address] =>
+    [phone] =>
+)
+
+Attempting to update student_id: 9
+Affected Rows: 1
+POST Data: Array
+(
+    [student_id] => 10
+    [last_name] => StudentLastName1759705022
+    [first_name] => UpdatedFirstName
+    [middle_name] =>
+    [sex] => M
+    [email] => student1759705022@test.com
+    [address] =>
+    [phone] =>
+)
+
+Attempting to update student_id: 10
+Affected Rows: 1
