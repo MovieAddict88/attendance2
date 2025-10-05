@@ -165,4 +165,23 @@ if ($conn->query($sql_parents) === TRUE) {
     echo "Error creating table: " . $conn->error;
 }
 
+$sql_attendance = "CREATE TABLE IF NOT EXISTS attendance (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    student_id INT(6) UNSIGNED NOT NULL,
+    subject_id INT(6) UNSIGNED NOT NULL,
+    teacher_id INT(6) UNSIGNED NOT NULL,
+    class_date DATE NOT NULL,
+    status ENUM('present', 'absent') NOT NULL,
+    UNIQUE KEY unique_attendance (student_id, subject_id, class_date),
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+)";
+
+if ($conn->query($sql_attendance) === TRUE) {
+    // echo "Table 'attendance' created successfully or already exists<br>";
+} else {
+    echo "Error creating table: " . $conn->error;
+}
+
 ?>

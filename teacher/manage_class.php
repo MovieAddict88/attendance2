@@ -128,6 +128,27 @@ for ($i = 0; $i < 5; $i++) { // Monday to Friday
     $date->modify('+1 day');
 }
 
+// --- Fetch Attendance Data ---
+$attendance_data = [];
+if (!empty($week_dates)) {
+    $start_date = $week_dates[0]->format('Y-m-d');
+    $end_date = end($week_dates)->format('Y-m-d');
+
+    $sql_attendance = "
+        SELECT student_id, class_date, status
+        FROM attendance
+        WHERE subject_id = ?
+        AND class_date BETWEEN ? AND ?
+    ";
+    $stmt_attendance = $conn->prepare($sql_attendance);
+    $stmt_attendance->bind_param("iss", $subject_id, $start_date, $end_date);
+    $stmt_attendance->execute();
+    $result_attendance = $stmt_attendance->get_result();
+
+    while ($row = $result_attendance->fetch_assoc()) {
+        $attendance_data[$row['student_id']][$row['class_date']] = $row['status'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -148,6 +169,20 @@ for ($i = 0; $i < 5; $i++) { // Monday to Friday
             text-decoration: none;
             background-color: #f0f0f0;
             border-radius: 5px;
+        }
+        .attendance-cell {
+            cursor: pointer;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 1.5em;
+            width: 50px;
+            height: 50px;
+        }
+        .attendance-cell.present {
+            color: green;
+        }
+        .attendance-cell.absent {
+            color: red;
         }
     </style>
 </head>
@@ -197,8 +232,22 @@ for ($i = 0; $i < 5; $i++) { // Monday to Friday
                                         <td><?php echo $count++; ?></td>
                                         <td class="name-col"><?php echo htmlspecialchars($row['full_name']); ?></td>
                                         <td></td> <!-- Sex -->
-                                        <?php foreach ($week_dates as $d): ?>
-                                            <td class="blank"></td>
+                                        <?php foreach ($week_dates as $d):
+                                            $date_str = $d->format('Y-m-d');
+                                            $status = $attendance_data[$row['id']][$date_str] ?? '';
+                                            $icon = '';
+                                            if ($status === 'present') {
+                                                $icon = '&#10004;'; // Checkmark
+                                            } else if ($status === 'absent') {
+                                                $icon = '&#10006;'; // X
+                                            }
+                                        ?>
+                                            <td class="attendance-cell <?php echo $status; ?>"
+                                                data-student-id="<?php echo $row['id']; ?>"
+                                                data-date="<?php echo $date_str; ?>"
+                                                data-status="<?php echo $status; ?>">
+                                                <?php echo $icon; ?>
+                                            </td>
                                         <?php endforeach; ?>
                                         <td></td> <!-- Total Present -->
                                         <td></td> <!-- Total Absent -->
@@ -264,5 +313,81 @@ for ($i = 0; $i < 5; $i++) { // Monday to Friday
             </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const subjectId = <?php echo json_encode($subject_id); ?>;
+
+        document.querySelectorAll('.attendance-cell').forEach(cell => {
+            cell.addEventListener('click', function () {
+                if (this.dataset.busy === 'true') {
+                    return;
+                }
+                this.dataset.busy = 'true';
+
+                const studentId = this.dataset.studentId;
+                const classDate = this.dataset.date;
+                let currentStatus = this.dataset.status;
+                let nextStatus;
+
+                if (currentStatus === '') {
+                    nextStatus = 'present';
+                } else if (currentStatus === 'present') {
+                    nextStatus = 'absent';
+                } else {
+                    nextStatus = ''; // Back to neutral
+                }
+
+                // Update UI immediately
+                this.dataset.status = nextStatus;
+                this.classList.remove('present', 'absent');
+                if (nextStatus === 'present') {
+                    this.innerHTML = '&#10004;'; // Checkmark
+                    this.classList.add('present');
+                } else if (nextStatus === 'absent') {
+                    this.innerHTML = '&#10006;'; // X
+                    this.classList.add('absent');
+                } else {
+                    this.innerHTML = '';
+                }
+
+                // Send data to the server
+                fetch('update_attendance.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        subject_id: subjectId,
+                        class_date: classDate,
+                        status: nextStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        // Revert UI on failure
+                        console.error('Failed to update attendance');
+                        this.dataset.status = currentStatus;
+                        this.classList.remove('present', 'absent');
+                        if (currentStatus === 'present') {
+                            this.innerHTML = '&#10004;';
+                            this.classList.add('present');
+                        } else if (currentStatus === 'absent') {
+                            this.innerHTML = '&#10006;';
+                            this.classList.add('absent');
+                        } else {
+                            this.innerHTML = '';
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error))
+                .finally(() => {
+                    this.dataset.busy = 'false';
+                });
+            });
+        });
+    });
+    </script>
 </body>
 </html>
