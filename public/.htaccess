@@ -1,0 +1,31 @@
+# --- Apache configuration for Document Management System ---
+
+# Enable the rewrite engine
+RewriteEngine On
+
+# --- Security Headers ---
+# Prevent content type sniffing
+Header set X-Content-Type-Options "nosniff"
+# Prevent Clickjacking
+Header set X-Frame-Options "SAMEORIGIN"
+# Enable XSS protection
+Header set X-XSS-Protection "1; mode=block"
+
+# --- Routing ---
+# Redirect all requests to index.php if they are not an existing file or directory
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]
+
+# --- Prevent Directory Listing ---
+Options -Indexes
+
+# --- Protect sensitive files ---
+# Deny access to .htaccess, .htpasswd, and any .ini files
+<Files ~ "\.(htaccess|htpasswd|ini)$">
+    Require all denied
+</Files>
+# Deny access to the /app and /config directories from the web
+<IfModule mod_rewrite.c>
+    RewriteRule ^(app|config)/ - [F,L]
+</IfModule>
