@@ -1,8 +1,8 @@
 <?php
-$servername = "127.0.0.1";
-$username = "school_user";
-$password = "password";
-$dbname = "school_management";
+$servername = "sql312.infinityfree.com";
+$username = "if0_40086614";
+$password = "3z61mIXR0Ws";
+$dbname = "if0_40086614_test";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password);
