@@ -1,5 +1,5 @@
 <?php
-$servername = "localhost";
+$servername = "127.0.0.1";
 $username = "school_user";
 $password = "password";
 $dbname = "school_management";
@@ -73,6 +73,8 @@ $sql_students = "CREATE TABLE IF NOT EXISTS students (
     full_name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    address VARCHAR(255),
+    phone VARCHAR(20),
     section_id INT(6) UNSIGNED,
     FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE,
     reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

@@ -93,23 +93,27 @@ $result_unassigned_students = $conn->query($sql_unassigned_students);
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>ID Number</th>
                                 <th>Full Name</th>
+                                <th>Address</th>
                                 <th>Email</th>
+                                <th>Contact Number</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ($result_students->num_rows > 0): ?>
                                 <?php while($row = $result_students->fetch_assoc()): ?>
                                     <tr>
-                                        <td><?php echo $row['id']; ?></td>
-                                        <td><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                        <td data-label="ID Number"><?php echo $row['id']; ?></td>
+                                        <td data-label="Full Name"><?php echo htmlspecialchars($row['full_name']); ?></td>
+                                        <td data-label="Address"><?php echo htmlspecialchars($row['address']); ?></td>
+                                        <td data-label="Email"><?php echo htmlspecialchars($row['email']); ?></td>
+                                        <td data-label="Contact Number"><?php echo htmlspecialchars($row['phone']); ?></td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="3">No students enrolled in this class yet.</td>
+                                    <td colspan="5">No students enrolled in this class yet.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -118,6 +122,9 @@ $result_unassigned_students = $conn->query($sql_unassigned_students);
 
                 <div class="add-students-form" style="margin-top: 30px;">
                     <h4>Add Students to Class</h4>
+                    <div style="margin-bottom: 20px;">
+                        <a href="add_student.php?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" class="btn" style="width: auto; display: inline-block; text-decoration: none; padding: 10px 15px;">Add New Student</a>
+                    </div>
                     <?php if ($result_unassigned_students->num_rows > 0): ?>
                         <form action="manage_class.php?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" method="post">
                             <div class="table-container">
@@ -125,18 +132,22 @@ $result_unassigned_students = $conn->query($sql_unassigned_students);
                                     <thead>
                                         <tr>
                                             <th></th>
-                                            <th>ID</th>
+                                            <th>ID Number</th>
                                             <th>Full Name</th>
+                                            <th>Address</th>
                                             <th>Email</th>
+                                            <th>Contact Number</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php while($row = $result_unassigned_students->fetch_assoc()): ?>
                                             <tr>
-                                                <td><input type="checkbox" name="student_ids[]" value="<?php echo $row['id']; ?>"></td>
-                                                <td><?php echo $row['id']; ?></td>
-                                                <td><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                                <td data-label="Select"><input type="checkbox" name="student_ids[]" value="<?php echo $row['id']; ?>"></td>
+                                                <td data-label="ID Number"><?php echo $row['id']; ?></td>
+                                                <td data-label="Full Name"><?php echo htmlspecialchars($row['full_name']); ?></td>
+                                                <td data-label="Address"><?php echo htmlspecialchars($row['address']); ?></td>
+                                                <td data-label="Email"><?php echo htmlspecialchars($row['email']); ?></td>
+                                                <td data-label="Contact Number"><?php echo htmlspecialchars($row['phone']); ?></td>
                                             </tr>
                                         <?php endwhile; ?>
                                     </tbody>
