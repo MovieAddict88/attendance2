@@ -295,7 +295,7 @@ while ($row = $result_monthly_summary->fetch_assoc()) {
                                             $remarks = '';
                                             if ($total_school_days > 0) {
                                                 $percentage = ($total_present / $total_school_days) * 100;
-                                                $remarks = number_format($percentage, 2) . '%';
+                                                $remarks = $total_present . "/" . $total_school_days . "*" . "100" . "=" . number_format($percentage, 2) . '%';
                                             }
                                         ?>
                                         <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>

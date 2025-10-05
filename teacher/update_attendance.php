@@ -100,10 +100,10 @@ if ($stmt->execute()) {
 
     $total_present = $summary['total_present'] ?? 0;
     $total_absent = $summary['total_absent'] ?? 0;
-    $remarks = '0.00%';
+    $remarks = '';
     if ($total_school_days > 0) {
         $percentage = ($total_present / $total_school_days) * 100;
-        $remarks = number_format($percentage, 2) . '%';
+        $remarks = $total_present . "/" . $total_school_days . "*" . "100" . "=" . number_format($percentage, 2) . '%';
     }
 
     echo json_encode([
