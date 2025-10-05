@@ -161,6 +161,7 @@ if (!empty($week_dates)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Class</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sf2-header.css">
     <style>
         .attendance-nav {
             display: flex;
@@ -194,18 +195,15 @@ if (!empty($week_dates)) {
     <div class="dashboard-container">
         <?php include 'includes/header.php'; ?>
         <div class="main-content">
-            <div class="header">
-                <h3>Manage Class: <?php echo htmlspecialchars($class_details['grade_name']); ?> - <?php echo htmlspecialchars($class_details['section_name']); ?></h3>
-                <h4>Subject: <?php echo htmlspecialchars($class_details['subject_name']); ?></h4>
-            </div>
             <div class="content-area">
+                <?php include 'includes/sf2_header.php'; ?>
+
                 <?php if(isset($_GET['message']) && $_GET['message'] == 'students_added'): ?>
                     <div class="message success">Students added successfully!</div>
                 <?php endif; ?>
 
                 <h4>Enrolled Students</h4>
                 <div class="table-container attendance-table">
-                    <h3 style="text-align:center;">SCHOOL FORM 2 (SF2) - DAILY ATTENDANCE REPORT OF LEARNERS</h3>
                     <div class="attendance-nav">
                         <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_week_month; ?>&year=<?php echo $prev_week_year; ?>&week=<?php echo $prev_week_week; ?>" <?php if ($year <= 2010 && $month == 1 && $week == 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
                         <span><?php echo "$month_name $year - Week $week"; ?></span>
