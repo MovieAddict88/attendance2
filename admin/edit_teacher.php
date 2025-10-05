@@ -15,9 +15,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = $_POST['phone'];
     $subject_taught = $_POST['subject_taught'];
 
-    $sql = "UPDATE teachers SET full_name = ?, email = ?, phone = ?, subject_taught = ? WHERE id = ?";
+    $profile_image = $_POST['current_image'];
+    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == 0) {
+        $target_dir = "../uploads/images/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
+        $filename = basename($_FILES["profile_image"]["name"]);
+        $target_file = $target_dir . $filename;
+        if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
+            $profile_image = "uploads/images/" . $filename;
+        }
+    }
+
+    $sql = "UPDATE teachers SET full_name = ?, email = ?, phone = ?, subject_taught = ?, profile_image = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssi", $full_name, $email, $phone, $subject_taught, $teacher_id);
+    $stmt->bind_param("sssssi", $full_name, $email, $phone, $subject_taught, $profile_image, $teacher_id);
 
     if ($stmt->execute()) {
         header("Location: manage_teachers.php");
@@ -53,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <?php if(isset($error)): ?>
                     <p class="error"><?php echo $error; ?></p>
                 <?php endif; ?>
-                <form action="edit_teacher.php?id=<?php echo $teacher_id; ?>" method="post">
+                <form action="edit_teacher.php?id=<?php echo $teacher_id; ?>" method="post" enctype="multipart/form-data">
                     <div class="input-group">
                         <label for="full_name">Full Name</label>
                         <input type="text" id="full_name" name="full_name" value="<?php echo $teacher['full_name']; ?>" required>
@@ -69,6 +82,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="input-group">
                         <label for="subject_taught">Subject Taught</label>
                         <input type="text" id="subject_taught" name="subject_taught" value="<?php echo $teacher['subject_taught']; ?>">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile_image">Profile Image</label>
+                        <input type="file" id="profile_image" name="profile_image">
+                        <input type="hidden" name="current_image" value="<?php echo $teacher['profile_image']; ?>">
+                        <?php if (!empty($teacher['profile_image'])): ?>
+                            <img src="../<?php echo $teacher['profile_image']; ?>" alt="Profile Image" width="100">
+                        <?php endif; ?>
                     </div>
                     <button type="submit" class="btn">Update Teacher</button>
                 </form>

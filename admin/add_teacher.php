@@ -14,10 +14,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $subject_taught = $_POST['subject_taught'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
+    $profile_image = '';
+    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == 0) {
+        $target_dir = "../uploads/images/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0755, true);
+        }
+        $filename = basename($_FILES["profile_image"]["name"]);
+        $target_file = $target_dir . $filename;
+        if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
+            $profile_image = "uploads/images/" . $filename;
+        }
+    }
 
-    $sql = "INSERT INTO teachers (full_name, email, phone, subject_taught, password) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO teachers (full_name, email, phone, subject_taught, password, profile_image) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssss", $full_name, $email, $phone, $subject_taught, $password);
+    $stmt->bind_param("ssssss", $full_name, $email, $phone, $subject_taught, $password, $profile_image);
 
     if ($stmt->execute()) {
         header("Location: manage_teachers.php");
@@ -46,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <?php if(isset($error)): ?>
                     <p class="error"><?php echo $error; ?></p>
                 <?php endif; ?>
-                <form action="add_teacher.php" method="post">
+                <form action="add_teacher.php" method="post" enctype="multipart/form-data">
                     <div class="input-group">
                         <label for="full_name">Full Name</label>
                         <input type="text" id="full_name" name="full_name" required>
@@ -66,6 +78,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="input-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile_image">Profile Image</label>
+                        <input type="file" id="profile_image" name="profile_image">
                     </div>
                     <button type="submit" class="btn">Add Teacher</button>
                 </form>

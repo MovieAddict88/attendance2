@@ -38,6 +38,7 @@ $sql_teachers = "CREATE TABLE IF NOT EXISTS teachers (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     subject_taught VARCHAR(50),
+    profile_image VARCHAR(255),
     reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )";
 
