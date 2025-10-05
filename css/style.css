@@ -428,6 +428,5 @@ table tr:hover {
 }
 
 .attendance-table td.blank {
-    width: 22px;
-    height: 22px;
+    height: 22px; /* Maintain height for consistency */
 }
