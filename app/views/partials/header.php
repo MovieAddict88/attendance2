@@ -29,7 +29,13 @@ $is_logged_in = isset($_SESSION['user_id']);
             <i class="fas fa-file-alt"></i> DocMS
         </a>
     </div>
-    <nav>
+    <nav class="main-nav">
+        <?php if ($is_logged_in): ?>
+            <form action="<?php echo $base_url; ?>/search" method="GET" class="search-form">
+                <input type="search" name="q" placeholder="Search files & folders..." value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>" required>
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        <?php endif; ?>
         <ul>
             <?php if ($is_logged_in): ?>
                 <li><span>Welcome, <?php echo htmlspecialchars($_SESSION['user_fullname']); ?>!</span></li>

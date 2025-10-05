@@ -9,7 +9,14 @@ include_once BASE_PATH . '/app/views/partials/header.php';
 
 <div class="container">
     <div class="dashboard-header">
-        <h2>My Documents</h2>
+        <nav class="breadcrumbs">
+            <?php foreach ($breadcrumbs as $index => $crumb): ?>
+                <a href="<?php echo $crumb['url']; ?>"><?php echo htmlspecialchars($crumb['name']); ?></a>
+                <?php if ($index < count($breadcrumbs) - 1): ?>
+                    <span>/</span>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </nav>
         <div>
             <button id="uploadBtn" class="btn">
                 <i class="fas fa-upload"></i> Upload File
@@ -41,8 +48,10 @@ include_once BASE_PATH . '/app/views/partials/header.php';
         <?php if (!empty($folders)): ?>
             <?php foreach ($folders as $folder): ?>
                 <div class="folder-item">
-                    <div class="item-icon">&#128193;</div> <!-- Folder emoji icon -->
-                    <div class="item-name"><?php echo htmlspecialchars($folder['name']); ?></div>
+                    <a href="<?php echo $base_url; ?>/dashboard?folder_id=<?php echo $folder['id']; ?>" class="item-link">
+                        <div class="item-icon">&#128193;</div> <!-- Folder emoji icon -->
+                        <div class="item-name"><?php echo htmlspecialchars($folder['name']); ?></div>
+                    </a>
                     <div class="item-actions">
                         <a href="<?php echo $base_url; ?>/delete?type=folder&id=<?php echo $folder['id']; ?>" onclick="return confirm('Are you sure you want to delete this folder and all its contents?');" title="Delete">
                             &times;
@@ -58,11 +67,16 @@ include_once BASE_PATH . '/app/views/partials/header.php';
                 <div class="file-item">
                     <div class="item-icon">&#128196;</div> <!-- Document emoji icon -->
                     <div class="item-name" title="<?php echo htmlspecialchars($document['name']); ?>">
-                        <?php echo htmlspecialchars($document['name']); ?>
+                        <a href="<?php echo $base_url; ?>/download?id=<?php echo $document['id']; ?>" title="Download <?php echo htmlspecialchars($document['name']); ?>">
+                            <?php echo htmlspecialchars($document['name']); ?>
+                        </a>
                     </div>
-                     <div class="item-actions">
-                        <a href="<?php echo $base_url; ?>/delete?type=document&id=<?php echo $document['id']; ?>" onclick="return confirm('Are you sure you want to delete this file?');" title="Delete">
-                            &times;
+                    <div class="item-actions">
+                         <a href="<?php echo $base_url; ?>/download?id=<?php echo $document['id']; ?>" class="action-icon" title="Download">
+                            &#x21E9; <!-- Download icon -->
+                        </a>
+                        <a href="<?php echo $base_url; ?>/delete?type=document&id=<?php echo $document['id']; ?>" class="action-icon" onclick="return confirm('Are you sure you want to delete this file?');" title="Delete">
+                            &times; <!-- Delete icon -->
                         </a>
                     </div>
                 </div>
@@ -82,6 +96,7 @@ include_once BASE_PATH . '/app/views/partials/header.php';
         <span class="close-btn">&times;</span>
         <h3>Upload a New File</h3>
         <form action="<?php echo $base_url; ?>/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="folder_id" value="<?php echo $current_folder_id ?? ''; ?>">
             <div class="form-group">
                 <label for="fileToUpload">Select file to upload:</label>
                 <input type="file" name="fileToUpload" id="fileToUpload" required>
@@ -97,6 +112,7 @@ include_once BASE_PATH . '/app/views/partials/header.php';
         <span class="close-btn">&times;</span>
         <h3>Create a New Folder</h3>
         <form action="<?php echo $base_url; ?>/create_folder" method="post">
+            <input type="hidden" name="parent_id" value="<?php echo $current_folder_id ?? ''; ?>">
             <div class="form-group">
                 <label for="folderName">Folder Name:</label>
                 <input type="text" name="folderName" id="folderName" required>
