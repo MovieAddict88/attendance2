@@ -209,7 +209,7 @@ if (!empty($week_dates)) {
                 <div class="sf2-sheet" role="region" aria-label="SF2 header">
                     <div class="sf2-top-row">
                         <div class="sf2-logo" aria-hidden="true">
-                            <img src="../uploads/images/logo.png" alt="School Logo">
+                            <img src="../uploads/images/seal.png" alt="School Logo">
                         </div>
 
                         <div class="sf2-title-wrap">
@@ -218,7 +218,7 @@ if (!empty($week_dates)) {
                         </div>
 
                         <div class="sf2-logo" aria-hidden="true">
-                            <img src="../uploads/images/seal.png" alt="Department of Education Seal">
+                            <img src="../uploads/images/logo.png" alt="Department of Education Seal">
                         </div>
                     </div>
 
