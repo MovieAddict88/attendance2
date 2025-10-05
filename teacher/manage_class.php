@@ -149,6 +149,45 @@ if (!empty($week_dates)) {
         $attendance_data[$row['student_id']][$row['class_date']] = $row['status'];
     }
 }
+
+// --- Fetch Monthly Attendance Summary for Totals and Remarks ---
+$first_day_of_month = new DateTime("$year-$month-01");
+$last_day_of_month = new DateTime("$year-$month-$days_in_month");
+
+// Calculate total school days (Mon-Fri) in the month
+$total_school_days = 0;
+$current_day = clone $first_day_of_month;
+while ($current_day <= $last_day_of_month) {
+    $day_of_week = $current_day->format('N');
+    if ($day_of_week >= 1 && $day_of_week <= 5) { // Monday to Friday
+        $total_school_days++;
+    }
+    $current_day->modify('+1 day');
+}
+
+
+$sql_monthly_summary = "
+    SELECT
+        student_id,
+        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
+        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent
+    FROM attendance
+    WHERE subject_id = ?
+      AND class_date BETWEEN ? AND ?
+    GROUP BY student_id
+";
+$stmt_monthly_summary = $conn->prepare($sql_monthly_summary);
+$first_day_str = $first_day_of_month->format('Y-m-d');
+$last_day_str = $last_day_of_month->format('Y-m-d');
+$stmt_monthly_summary->bind_param("iss", $subject_id, $first_day_str, $last_day_str);
+$stmt_monthly_summary->execute();
+$result_monthly_summary = $stmt_monthly_summary->get_result();
+
+$monthly_summary_data = [];
+while ($row = $result_monthly_summary->fetch_assoc()) {
+    $monthly_summary_data[$row['student_id']] = $row;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -249,9 +288,19 @@ if (!empty($week_dates)) {
                                                 <?php echo $icon; ?>
                                             </td>
                                         <?php endforeach; ?>
-                                        <td></td> <!-- Total Present -->
-                                        <td></td> <!-- Total Absent -->
-                                        <td></td> <!-- Remarks -->
+                                        <?php
+                                            $summary = $monthly_summary_data[$row['id']] ?? ['total_present' => 0, 'total_absent' => 0];
+                                            $total_present = $summary['total_present'];
+                                            $total_absent = $summary['total_absent'];
+                                            $remarks = '';
+                                            if ($total_school_days > 0) {
+                                                $percentage = ($total_present / $total_school_days) * 100;
+                                                $remarks = number_format($percentage, 2) . '%';
+                                            }
+                                        ?>
+                                        <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
+                                        <td id="absent-<?php echo $row['id']; ?>"><?php echo $total_absent; ?></td>
+                                        <td id="remarks-<?php echo $row['id']; ?>"><?php echo $remarks; ?></td>
                                     </tr>
                                 <?php endwhile; ?>
                                 <?php $result_students->data_seek(0); // Reset result set pointer ?>
@@ -365,7 +414,12 @@ if (!empty($week_dates)) {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (!data.success) {
+                    if (data.success && data.totals) {
+                        // Update the totals in the table
+                        document.getElementById('present-' + studentId).textContent = data.totals.total_present;
+                        document.getElementById('absent-' + studentId).textContent = data.totals.total_absent;
+                        document.getElementById('remarks-' + studentId).textContent = data.totals.remarks;
+                    } else {
                         // Revert UI on failure
                         console.error('Failed to update attendance');
                         this.dataset.status = currentStatus;
