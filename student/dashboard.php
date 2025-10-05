@@ -10,8 +10,13 @@ include '../includes/database.php';
 $student_id = $_SESSION['student_id'];
 
 // For demonstration, we'll just show student's own info.
-// A real app would have tables for grades, attendance, etc.
-$sql = "SELECT * FROM students WHERE id = ?";
+$sql = "
+    SELECT s.first_name, s.last_name, s.middle_name, s.email, sec.section_name, g.grade_name
+    FROM students s
+    LEFT JOIN sections sec ON s.section_id = sec.id
+    LEFT JOIN grades g ON sec.grade_id = g.id
+    WHERE s.id = ?
+";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
@@ -32,13 +37,19 @@ $student = $result->fetch_assoc();
         <?php include 'includes/header.php'; ?>
         <div class="main-content">
             <div class="header">
-                <h3>Welcome, <?php echo $_SESSION['student_name']; ?>!</h3>
+                <h3>Welcome, <?php echo htmlspecialchars($student['first_name']); ?>!</h3>
             </div>
             <div class="content-area">
                 <h4>Your Information</h4>
-                <p><strong>Name:</strong> <?php echo $student['full_name']; ?></p>
-                <p><strong>Email:</strong> <?php echo $student['email']; ?></p>
-                <p><strong>Class:</strong> <?php echo $student['class']; ?></p>
+                <?php
+                    $full_name = htmlspecialchars($student['last_name'] . ', ' . $student['first_name'] . ' ' . $student['middle_name']);
+                    $class_info = $student['grade_name'] && $student['section_name']
+                                  ? htmlspecialchars($student['grade_name'] . ' - ' . $student['section_name'])
+                                  : 'N/A';
+                ?>
+                <p><strong>Name:</strong> <?php echo $full_name; ?></p>
+                <p><strong>Email:</strong> <?php echo htmlspecialchars($student['email']); ?></p>
+                <p><strong>Class:</strong> <?php echo $class_info; ?></p>
 
                 <h4 style="margin-top: 20px;">Your Grades</h4>
                 <p>Grades functionality coming soon.</p>

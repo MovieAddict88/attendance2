@@ -8,7 +8,7 @@ if (!isset($_SESSION['admin_id'])) {
 include '../includes/database.php';
 
 // Fetch all students for the dropdown
-$sql_students = "SELECT id, full_name FROM students";
+$sql_students = "SELECT id, last_name, first_name, middle_name FROM students ORDER BY last_name, first_name, middle_name";
 $result_students = $conn->query($sql_students);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -67,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <select id="student_id" name="student_id" required>
                             <option value="">Select a Student</option>
                             <?php while($student = $result_students->fetch_assoc()): ?>
-                                <option value="<?php echo $student['id']; ?>"><?php echo $student['full_name']; ?></option>
+                                <option value="<?php echo $student['id']; ?>"><?php echo htmlspecialchars($student['last_name'] . ', ' . $student['first_name'] . ' ' . $student['middle_name']); ?></option>
                             <?php endwhile; ?>
                         </select>
                     </div>

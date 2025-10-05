@@ -11,14 +11,17 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $full_name = trim($_POST['full_name']);
+    $last_name = trim($_POST['last_name']);
+    $first_name = trim($_POST['first_name']);
+    $middle_name = trim($_POST['middle_name']);
+    $sex = trim($_POST['sex']);
     $email = trim($_POST['email']);
     $address = trim($_POST['address']);
     $phone = trim($_POST['phone']);
     $section_id = !empty($_POST['section_id']) ? $_POST['section_id'] : null;
 
-    if (empty($full_name) || empty($email)) {
-        $error = "Full Name and Email are required.";
+    if (empty($last_name) || empty($first_name) || empty($sex) || empty($email)) {
+        $error = "Last Name, First Name, Sex, and Email are required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email format.";
     } else {
@@ -34,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $password = password_hash('password123', PASSWORD_DEFAULT); // Default password
 
-            $sql_insert = "INSERT INTO students (full_name, email, password, address, phone, section_id) VALUES (?, ?, ?, ?, ?, ?)";
+            $sql_insert = "INSERT INTO students (last_name, first_name, middle_name, sex, email, password, address, phone, section_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt_insert = $conn->prepare($sql_insert);
-            $stmt_insert->bind_param("sssssi", $full_name, $email, $password, $address, $phone, $section_id);
+            $stmt_insert->bind_param("ssssssssi", $last_name, $first_name, $middle_name, $sex, $email, $password, $address, $phone, $section_id);
 
             if ($stmt_insert->execute()) {
                 // Get subject_id from the form action URL for the redirect
@@ -80,8 +83,24 @@ $subject_id_return = isset($_GET['subject_id']) ? $_GET['subject_id'] : '';
 
                     <form action="add_student.php?section_id=<?php echo $section_id_return; ?>&subject_id=<?php echo $subject_id_return; ?>" method="post">
                         <div class="input-group">
-                            <label for="full_name">Full Name</label>
-                            <input type="text" id="full_name" name="full_name" required>
+                            <label for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="middle_name">Middle Name</label>
+                            <input type="text" id="middle_name" name="middle_name">
+                        </div>
+                        <div class="input-group">
+                            <label for="sex">Sex</label>
+                            <select id="sex" name="sex" required>
+                                <option value="">Select Sex</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
                         </div>
                         <div class="input-group">
                             <label for="email">Email</label>

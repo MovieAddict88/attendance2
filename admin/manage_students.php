@@ -7,8 +7,14 @@ if (!isset($_SESSION['admin_id'])) {
 
 include '../includes/database.php';
 
-// Fetch all students
-$sql = "SELECT * FROM students";
+// Fetch all students with their class details
+$sql = "
+    SELECT s.id, s.last_name, s.first_name, s.middle_name, s.sex, s.email, g.grade_name, sec.section_name
+    FROM students s
+    LEFT JOIN sections sec ON s.section_id = sec.id
+    LEFT JOIN grades g ON sec.grade_id = g.id
+    ORDER BY s.last_name, s.first_name, s.middle_name
+";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -32,7 +38,8 @@ $result = $conn->query($sql);
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Full Name</th>
+                            <th>Name</th>
+                            <th>Sex</th>
                             <th>Email</th>
                             <th>Class</th>
                             <th>Actions</th>
@@ -43,9 +50,10 @@ $result = $conn->query($sql);
                             <?php while($row = $result->fetch_assoc()): ?>
                                 <tr>
                                     <td><?php echo $row['id']; ?></td>
-                                    <td><?php echo $row['full_name']; ?></td>
-                                    <td><?php echo $row['email']; ?></td>
-                                    <td><?php echo $row['class']; ?></td>
+                                    <td><?php echo htmlspecialchars($row['last_name'] . ', ' . $row['first_name'] . ' ' . $row['middle_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['sex']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['grade_name'] . ' - ' . $row['section_name']); ?></td>
                                     <td>
                                         <a href="edit_student.php?id=<?php echo $row['id']; ?>" class="btn-edit">Edit</a>
                                         <a href="delete_student.php?id=<?php echo $row['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');">Delete</a>

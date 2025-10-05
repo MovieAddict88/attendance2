@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $sql = "SELECT id, full_name, password FROM students WHERE email = ?";
+    $sql = "SELECT id, password FROM students WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -16,7 +16,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $row = $result->fetch_assoc();
         if (password_verify($password, $row['password'])) {
             $_SESSION['student_id'] = $row['id'];
-            $_SESSION['student_name'] = $row['full_name'];
             header("Location: dashboard.php");
             exit();
         } else {

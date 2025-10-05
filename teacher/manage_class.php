@@ -39,7 +39,7 @@ if (!$class_details) {
 }
 
 // Fetch students in this section
-$sql_students = "SELECT * FROM students WHERE section_id = ?";
+$sql_students = "SELECT * FROM students WHERE section_id = ? ORDER BY last_name, first_name, middle_name";
 $stmt_students = $conn->prepare($sql_students);
 $stmt_students->bind_param("i", $section_id);
 $stmt_students->execute();
@@ -288,8 +288,13 @@ if (!empty($week_dates)) {
                                     <?php while($row = $result_students->fetch_assoc()): ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
-                                            <td class="name-col"><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                            <td></td> <!-- Sex -->
+                                            <td class="name-col">
+                                                <?php
+                                                    $full_name = htmlspecialchars($row['last_name'] . ', ' . $row['first_name'] . ' ' . $row['middle_name']);
+                                                    echo $full_name;
+                                                ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars(strtoupper(substr($row['sex'], 0, 1))); ?></td>
                                             <?php foreach ($week_dates as $d):
                                                 $date_str = $d->format('Y-m-d');
                                                 $status = $attendance_data[$row['id']][$date_str] ?? '';
