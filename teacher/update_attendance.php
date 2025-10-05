@@ -36,31 +36,24 @@ if (!in_array($status, ['present', 'absent', ''])) {
     exit();
 }
 
-// If status is empty, delete the record
-if ($status === '') {
-    $sql = "DELETE FROM attendance WHERE student_id = ? AND subject_id = ? AND class_date = ?";
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Database error: ' . $conn->error]);
-        exit();
-    }
-    $stmt->bind_param("iis", $student_id, $subject_id, $class_date);
-} else {
-    // Otherwise, insert or update the record
-    $sql = "
-        INSERT INTO attendance (student_id, subject_id, teacher_id, class_date, status)
-        VALUES (?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE status = VALUES(status)
-    ";
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Database error: ' . $conn->error]);
-        exit();
-    }
-    $stmt->bind_param("iiiss", $student_id, $subject_id, $teacher_id, $class_date, $status);
+// If status is an empty string, it means we want to clear the attendance.
+// With the new schema, we can represent this as NULL.
+$final_status = $status === '' ? null : $status;
+
+// Use a single query to handle insert, update, and "clearing" (by setting status to NULL)
+$sql = "
+    INSERT INTO attendance (student_id, subject_id, teacher_id, class_date, status)
+    VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE status = VALUES(status)
+";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    exit();
 }
+// Note: Binding a NULL value with type 's' is handled correctly by mysqli
+$stmt->bind_param("iiiss", $student_id, $subject_id, $teacher_id, $class_date, $final_status);
 
 if ($stmt->execute()) {
     // After a successful update, fetch the new weekly totals for the student

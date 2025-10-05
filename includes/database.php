@@ -124,7 +124,7 @@ $sql_attendance = "CREATE TABLE IF NOT EXISTS attendance (
     subject_id INT(6) UNSIGNED NOT NULL,
     teacher_id INT(6) UNSIGNED NOT NULL,
     class_date DATE NOT NULL,
-    status ENUM('present', 'absent') NOT NULL,
+    status ENUM('present', 'absent') DEFAULT NULL,
     UNIQUE KEY unique_attendance (student_id, subject_id, class_date),
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
@@ -142,6 +142,9 @@ $conn->query($sql_teacher_assignments);
 $conn->query($sql_students);
 $conn->query($sql_parents);
 $conn->query($sql_attendance);
+
+// Also run an alter statement to be sure. This is safe to run multiple times.
+$conn->query("ALTER TABLE attendance MODIFY status ENUM('present', 'absent') DEFAULT NULL");
 
 
 // --- Seeding Data ---
