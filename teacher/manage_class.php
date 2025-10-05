@@ -218,6 +218,11 @@ if (!empty($week_dates)) {
                 $month_for_header = htmlspecialchars($month_name);
 
                 ?>
+                <?php if(isset($_GET['message']) && $_GET['message'] == 'students_added'): ?>
+                    <div class="message success">Students added successfully!</div>
+                <?php endif; ?>
+
+                <h4>Enrolled Students</h4>
                 <div class="sf2-sheet" role="region" aria-label="SF2 header">
                     <div class="sf2-top-row">
                         <div class="sf2-logo" aria-hidden="true">
@@ -271,103 +276,97 @@ if (!empty($week_dates)) {
                             <div class="value" id="district"><?php echo $division; ?></div>
                         </div>
                     </div>
-                </div>
-
-                <?php if(isset($_GET['message']) && $_GET['message'] == 'students_added'): ?>
-                    <div class="message success">Students added successfully!</div>
-                <?php endif; ?>
-
-                <h4>Enrolled Students</h4>
-                <div class="table-container attendance-table">
-                    <div class="attendance-nav">
-                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_week_month; ?>&year=<?php echo $prev_week_year; ?>&week=<?php echo $prev_week_week; ?>" <?php if ($year <= 2010 && $month == 1 && $week == 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
-                        <span><?php echo "$month_name $year - Week $week"; ?></span>
-                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $next_week_month; ?>&year=<?php echo $next_week_year; ?>&week=<?php echo $next_week_week; ?>" <?php if ($next_week_year > 2030) echo 'style="visibility: hidden;"'; ?>>Next Week &raquo;</a>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th rowspan="2">No.</th>
-                                <th rowspan="2" class="name-col">LEARNER'S NAME<br><span class="small">(Last Name, First Name, Middle Name)</span></th>
-                                <th rowspan="2">SEX</th>
-                                <th colspan="5">Days of the Week</th>
-                                <th rowspan="2">TOTAL<br>PRESENT</th>
-                                <th rowspan="2">TOTAL<br>ABSENT</th>
-                                <th rowspan="2">REMARKS</th>
-                            </tr>
-                            <tr>
-                                <?php foreach ($week_dates as $d): ?>
-                                    <th><?php echo $d->format('D') . '<br>' . $d->format('j'); ?></th>
-                                <?php endforeach; ?>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($result_students->num_rows > 0): ?>
-                                <?php $count = 1; ?>
-                                <?php while($row = $result_students->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo $count++; ?></td>
-                                        <td class="name-col"><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                        <td></td> <!-- Sex -->
-                                        <?php foreach ($week_dates as $d):
-                                            $date_str = $d->format('Y-m-d');
-                                            $status = $attendance_data[$row['id']][$date_str] ?? '';
-                                            $icon = '';
-                                            if ($status === 'present') {
-                                                $icon = '&#10004;'; // Checkmark
-                                            } else if ($status === 'absent') {
-                                                $icon = '&#10006;'; // X
-                                            }
-                                        ?>
-                                            <td class="attendance-cell <?php echo $status; ?>"
-                                                data-student-id="<?php echo $row['id']; ?>"
-                                                data-date="<?php echo $date_str; ?>"
-                                                data-status="<?php echo $status; ?>">
-                                                <?php echo $icon; ?>
-                                            </td>
-                                        <?php endforeach; ?>
-                                        <?php
-                                            // Calculate totals for the current week's view
-                                            $total_present = 0;
-                                            $total_absent = 0;
-                                            foreach ($week_dates as $d) {
+                    <div class="table-container attendance-table">
+                        <div class="attendance-nav">
+                            <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_week_month; ?>&year=<?php echo $prev_week_year; ?>&week=<?php echo $prev_week_week; ?>" <?php if ($year <= 2010 && $month == 1 && $week == 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
+                            <span><?php echo "$month_name $year - Week $week"; ?></span>
+                            <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $next_week_month; ?>&year=<?php echo $next_week_year; ?>&week=<?php echo $next_week_week; ?>" <?php if ($next_week_year > 2030) echo 'style="visibility: hidden;"'; ?>>Next Week &raquo;</a>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">No.</th>
+                                    <th rowspan="2" class="name-col">LEARNER'S NAME<br><span class="small">(Last Name, First Name, Middle Name)</span></th>
+                                    <th rowspan="2">SEX</th>
+                                    <th colspan="5">Days of the Week</th>
+                                    <th rowspan="2">TOTAL<br>PRESENT</th>
+                                    <th rowspan="2">TOTAL<br>ABSENT</th>
+                                    <th rowspan="2">REMARKS</th>
+                                </tr>
+                                <tr>
+                                    <?php foreach ($week_dates as $d): ?>
+                                        <th><?php echo $d->format('D') . '<br>' . $d->format('j'); ?></th>
+                                    <?php endforeach; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($result_students->num_rows > 0): ?>
+                                    <?php $count = 1; ?>
+                                    <?php while($row = $result_students->fetch_assoc()): ?>
+                                        <tr>
+                                            <td><?php echo $count++; ?></td>
+                                            <td class="name-col"><?php echo htmlspecialchars($row['full_name']); ?></td>
+                                            <td></td> <!-- Sex -->
+                                            <?php foreach ($week_dates as $d):
                                                 $date_str = $d->format('Y-m-d');
                                                 $status = $attendance_data[$row['id']][$date_str] ?? '';
+                                                $icon = '';
                                                 if ($status === 'present') {
-                                                    $total_present++;
+                                                    $icon = '&#10004;'; // Checkmark
                                                 } else if ($status === 'absent') {
-                                                    $total_absent++;
+                                                    $icon = '&#10006;'; // X
                                                 }
-                                            }
+                                            ?>
+                                                <td class="attendance-cell <?php echo $status; ?>"
+                                                    data-student-id="<?php echo $row['id']; ?>"
+                                                    data-date="<?php echo $date_str; ?>"
+                                                    data-status="<?php echo $status; ?>">
+                                                    <?php echo $icon; ?>
+                                                </td>
+                                            <?php endforeach; ?>
+                                            <?php
+                                                // Calculate totals for the current week's view
+                                                $total_present = 0;
+                                                $total_absent = 0;
+                                                foreach ($week_dates as $d) {
+                                                    $date_str = $d->format('Y-m-d');
+                                                    $status = $attendance_data[$row['id']][$date_str] ?? '';
+                                                    if ($status === 'present') {
+                                                        $total_present++;
+                                                    } else if ($status === 'absent') {
+                                                        $total_absent++;
+                                                    }
+                                                }
 
-                                            $remarks = '';
-                                            // There are always 5 days in the week view (Mon-Fri)
-                                            $total_school_days_in_week = 5;
-                                            if ($total_school_days_in_week > 0) {
-                                                $percentage = ($total_present / $total_school_days_in_week) * 100;
-                                                $remarks = number_format($percentage, 2) . '%';
-                                            }
-                                        ?>
-                                        <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
-                                        <td id="absent-<?php echo $row['id']; ?>"><?php echo $total_absent; ?></td>
-                                        <td id="remarks-<?php echo $row['id']; ?>"><?php echo $remarks; ?></td>
+                                                $remarks = '';
+                                                // There are always 5 days in the week view (Mon-Fri)
+                                                $total_school_days_in_week = 5;
+                                                if ($total_school_days_in_week > 0) {
+                                                    $percentage = ($total_present / $total_school_days_in_week) * 100;
+                                                    $remarks = number_format($percentage, 2) . '%';
+                                                }
+                                            ?>
+                                            <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
+                                            <td id="absent-<?php echo $row['id']; ?>"><?php echo $total_absent; ?></td>
+                                            <td id="remarks-<?php echo $row['id']; ?>"><?php echo $remarks; ?></td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                    <?php $result_students->data_seek(0); // Reset result set pointer ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="11">No students enrolled in this class yet.</td>
                                     </tr>
-                                <?php endwhile; ?>
-                                <?php $result_students->data_seek(0); // Reset result set pointer ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="11">No students enrolled in this class yet.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                    <br>
-                    <table style="width:100%; border:1px solid black;">
-                        <tr>
-                            <td style="width:50%; padding:8px;">Prepared by:<br><br><b>__________________________</b><br><small>Class Adviser</small></td>
-                            <td style="width:50%; padding:8px;">Checked by:<br><br><b>__________________________</b><br><small>School Head</small></td>
-                        </tr>
-                    </table>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                        <br>
+                        <table style="width:100%; border:1px solid black;">
+                            <tr>
+                                <td style="width:50%; padding:8px;">Prepared by:<br><br><b>__________________________</b><br><small>Class Adviser</small></td>
+                                <td style="width:50%; padding:8px;">Checked by:<br><br><b>__________________________</b><br><small>School Head</small></td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="add-students-form" style="margin-top: 30px;">

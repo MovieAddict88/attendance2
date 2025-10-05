@@ -164,3 +164,22 @@
         height: min(90px, 25vw);
     }
 }
+
+/*
+* Styles for merged SF2 view
+* -------------------------------------------
+*/
+
+/* Remove card styles from table container when inside the sheet */
+.sf2-sheet .table-container {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin-top: var(--spacing-lg); /* Add space between header info and table section */
+}
+
+/* The main table inside has its own top margin, let's reset it
+   as the .attendance-nav above it already provides spacing. */
+.sf2-sheet .attendance-table table:first-of-type {
+    margin-top: 0;
+}
