@@ -42,9 +42,19 @@ try {
     // Construct the full file path from the base storage path and the stored relative path.
     $file_path = BASE_PATH . '/' . $document['file_path'];
 
-    if (!file_exists($file_path)) {
-        // This case can happen if the file was deleted from the server manually.
-        $_SESSION['error_message'] = "Error: The file does not exist on the server.";
+    // --- SECURITY CHECK for Path Traversal ---
+    // 1. Define the absolute path of the allowed, secure storage directory.
+    $storage_base_path = realpath(BASE_PATH . '/storage/uploads');
+    // 2. Resolve the absolute path of the requested file.
+    $real_file_path = realpath($file_path);
+
+    // 3. Verify that the resolved file path starts with the storage base path.
+    // This check ensures that the requested file is within the intended directory
+    // and prevents traversal attacks (e.g., using '../' to access parent directories).
+    if ($real_file_path === false || strpos($real_file_path, $storage_base_path) !== 0) {
+        // If realpath() fails, the file doesn't exist.
+        // If strpos() doesn't return 0, the file is outside the allowed directory.
+        $_SESSION['error_message'] = "Error: File not found or access denied.";
         header("Location: {$base_url}/dashboard");
         exit;
     }
