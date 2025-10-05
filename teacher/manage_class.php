@@ -172,6 +172,17 @@ if (!empty($week_dates)) {
         .attendance-cell.absent {
             color: red;
         }
+        .btn-edit {
+            padding: 5px 10px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .btn-edit:hover {
+            background-color: #1976D2;
+        }
     </style>
 </head>
 <body>
@@ -203,6 +214,8 @@ if (!empty($week_dates)) {
                 ?>
                 <?php if(isset($_GET['message']) && $_GET['message'] == 'students_added'): ?>
                     <div class="message success">Students added successfully!</div>
+                <?php elseif(isset($_GET['message']) && $_GET['message'] == 'student_updated'): ?>
+                    <div class="message success">Student information updated successfully!</div>
                 <?php endif; ?>
 
                 <h4>Enrolled Students</h4>
@@ -275,6 +288,7 @@ if (!empty($week_dates)) {
                                     <th rowspan="2">TOTAL<br>PRESENT</th>
                                     <th rowspan="2">TOTAL<br>ABSENT</th>
                                     <th rowspan="2">REMARKS</th>
+                                    <th rowspan="2">ACTIONS</th>
                                 </tr>
                                 <tr>
                                     <?php foreach ($week_dates as $d): ?>
@@ -290,7 +304,11 @@ if (!empty($week_dates)) {
                                             <td><?php echo $count++; ?></td>
                                             <td class="name-col">
                                                 <?php
-                                                    $full_name = htmlspecialchars($row['last_name'] . ', ' . $row['first_name'] . ' ' . $row['middle_name']);
+                                                    $name_parts = [$row['last_name'] . ',', $row['first_name']];
+                                                    if (!empty(trim($row['middle_name']))) {
+                                                        $name_parts[] = $row['middle_name'];
+                                                    }
+                                                    $full_name = htmlspecialchars(implode(' ', $name_parts));
                                                     echo $full_name;
                                                 ?>
                                             </td>
@@ -337,6 +355,9 @@ if (!empty($week_dates)) {
                                             <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
                                             <td id="absent-<?php echo $row['id']; ?>"><?php echo $total_absent; ?></td>
                                             <td id="remarks-<?php echo $row['id']; ?>"><?php echo $remarks; ?></td>
+                                            <td>
+                                                <a href="edit_student.php?student_id=<?php echo $row['id']; ?>&section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" class="btn-edit">Edit</a>
+                                            </td>
                                         </tr>
                                     <?php endwhile; ?>
                                     <?php $result_students->data_seek(0); // Reset result set pointer ?>

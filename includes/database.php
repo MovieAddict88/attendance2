@@ -9,37 +9,45 @@ $conn = new mysqli($servername, $username, $password);
 
 // Check connection
 if ($conn->connect_error) {
-    // Try to create the database and user if they don't exist
+    // Try to create the database and user if they don't exist.
     // This requires a root-level connection temporarily.
-    $root_conn = new mysqli($servername, 'root', '');
-    if ($root_conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error . " and could not connect as root to fix: " . $root_conn->connect_error);
-    }
+    // Use a try-catch block to handle failures gracefully.
+    try {
+        $root_conn = new mysqli($servername, 'root', '');
+        if ($root_conn->connect_error) {
+            // Throw an exception if root connection fails, to be caught below.
+            throw new Exception("Could not connect as root to fix database issues.");
+        }
 
-    // Create database
-    $sql_create_db = "CREATE DATABASE IF NOT EXISTS $dbname";
-    if (!$root_conn->query($sql_create_db)) {
-        die("Error creating database: " . $root_conn->error);
-    }
+        // Create database
+        $sql_create_db = "CREATE DATABASE IF NOT EXISTS $dbname";
+        if (!$root_conn->query($sql_create_db)) {
+            throw new Exception("Error creating database: " . $root_conn->error);
+        }
 
-    // Create user
-    $sql_create_user = "CREATE USER IF NOT EXISTS '$username'@'localhost' IDENTIFIED BY '$password'";
-    if (!$root_conn->query($sql_create_user)) {
-        die("Error creating user: " . $root_conn->error);
-    }
+        // Create user
+        $sql_create_user = "CREATE USER IF NOT EXISTS '$username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$password'";
+        if (!$root_conn->query($sql_create_user)) {
+            throw new Exception("Error creating user: " . $root_conn->error);
+        }
 
-    // Grant privileges
-    $sql_grant_privileges = "GRANT ALL PRIVILEGES ON $dbname.* TO '$username'@'localhost'";
-    if (!$root_conn->query($sql_grant_privileges)) {
-        die("Error granting privileges: " . $root_conn->error);
-    }
+        // Grant privileges
+        $sql_grant_privileges = "GRANT ALL PRIVILEGES ON $dbname.* TO '$username'@'localhost'";
+        if (!$root_conn->query($sql_grant_privileges)) {
+            throw new Exception("Error granting privileges: " . $root_conn->error);
+        }
 
-    $root_conn->close();
+        $root_conn->close();
 
-    // Retry initial connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed even after setup attempt: " . $conn->connect_error);
+        // Retry initial connection
+        $conn = new mysqli($servername, $username, $password, $dbname);
+        if ($conn->connect_error) {
+            throw new Exception("Connection failed even after setup attempt: " . $conn->connect_error);
+        }
+    } catch (Exception $e) {
+        // If any part of the setup fails, die with a comprehensive error message.
+        // This prevents the application from continuing with a broken database connection.
+        die("Database setup failed: " . $e->getMessage() . ". Please check your MySQL server configuration and ensure the root user can create databases and users.");
     }
 }
 
