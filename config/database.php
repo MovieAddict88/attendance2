@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS `cars` (
   `image` varchar(255) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `status` varchar(50) NOT NULL DEFAULT 'available',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `rentals` (

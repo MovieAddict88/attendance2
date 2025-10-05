@@ -15,11 +15,35 @@ class Car
         $this->conn = $db;
     }
 
-    function readAll()
+    function readAll($search = '', $status = '')
     {
         $query = "SELECT id, name, image, price, status FROM " . $this->table_name;
+        $where = [];
+        $params = [];
+        $types = '';
+
+        if (!empty($search)) {
+            $where[] = "name LIKE ?";
+            $params[] = "%" . $search . "%";
+            $types .= 's';
+        }
+
+        if (!empty($status)) {
+            $where[] = "status = ?";
+            $params[] = $status;
+            $types .= 's';
+        }
+
+        if (count($where) > 0) {
+            $query .= " WHERE " . implode(' AND ', $where);
+        }
 
         $stmt = $this->conn->prepare($query);
+
+        if (!empty($types) && !empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+
         $stmt->execute();
 
         $result = $stmt->get_result();
