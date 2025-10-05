@@ -150,43 +150,8 @@ if (!empty($week_dates)) {
     }
 }
 
-// --- Fetch Monthly Attendance Summary for Totals and Remarks ---
-$first_day_of_month = new DateTime("$year-$month-01");
-$last_day_of_month = new DateTime("$year-$month-$days_in_month");
-
-// Calculate total school days (Mon-Fri) in the month
-$total_school_days = 0;
-$current_day = clone $first_day_of_month;
-while ($current_day <= $last_day_of_month) {
-    $day_of_week = $current_day->format('N');
-    if ($day_of_week >= 1 && $day_of_week <= 5) { // Monday to Friday
-        $total_school_days++;
-    }
-    $current_day->modify('+1 day');
-}
-
-
-$sql_monthly_summary = "
-    SELECT
-        student_id,
-        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
-        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent
-    FROM attendance
-    WHERE subject_id = ?
-      AND class_date BETWEEN ? AND ?
-    GROUP BY student_id
-";
-$stmt_monthly_summary = $conn->prepare($sql_monthly_summary);
-$first_day_str = $first_day_of_month->format('Y-m-d');
-$last_day_str = $last_day_of_month->format('Y-m-d');
-$stmt_monthly_summary->bind_param("iss", $subject_id, $first_day_str, $last_day_str);
-$stmt_monthly_summary->execute();
-$result_monthly_summary = $stmt_monthly_summary->get_result();
-
-$monthly_summary_data = [];
-while ($row = $result_monthly_summary->fetch_assoc()) {
-    $monthly_summary_data[$row['student_id']] = $row;
-}
+// Monthly summary logic removed as it's not needed for weekly view.
+// Totals are now calculated per-student inside the table loop.
 
 ?>
 <!DOCTYPE html>
@@ -289,13 +254,25 @@ while ($row = $result_monthly_summary->fetch_assoc()) {
                                             </td>
                                         <?php endforeach; ?>
                                         <?php
-                                            $summary = $monthly_summary_data[$row['id']] ?? ['total_present' => 0, 'total_absent' => 0];
-                                            $total_present = $summary['total_present'];
-                                            $total_absent = $summary['total_absent'];
+                                            // Calculate totals for the current week's view
+                                            $total_present = 0;
+                                            $total_absent = 0;
+                                            foreach ($week_dates as $d) {
+                                                $date_str = $d->format('Y-m-d');
+                                                $status = $attendance_data[$row['id']][$date_str] ?? '';
+                                                if ($status === 'present') {
+                                                    $total_present++;
+                                                } else if ($status === 'absent') {
+                                                    $total_absent++;
+                                                }
+                                            }
+
                                             $remarks = '';
-                                            if ($total_school_days > 0) {
-                                                $percentage = ($total_present / $total_school_days) * 100;
-                                                $remarks = $total_present . "/" . $total_school_days . "*" . "100" . "=" . number_format($percentage, 2) . '%';
+                                            // There are always 5 days in the week view (Mon-Fri)
+                                            $total_school_days_in_week = 5;
+                                            if ($total_school_days_in_week > 0) {
+                                                $percentage = ($total_present / $total_school_days_in_week) * 100;
+                                                $remarks = number_format($percentage, 2) . '%';
                                             }
                                         ?>
                                         <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
