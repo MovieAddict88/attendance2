@@ -399,3 +399,35 @@ table tr:hover {
     font-size: 0.9em;
     color: #ccc;
 }
+
+/* Attendance Table Styles */
+.attendance-table table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+}
+
+.attendance-table th, .attendance-table td {
+    border: 1px solid black;
+    text-align: center;
+    padding: 2px;
+}
+
+.attendance-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+.attendance-table .name-col {
+    width: 200px;
+    text-align: left;
+}
+
+.attendance-table .small {
+    font-size: 10px;
+}
+
+.attendance-table td.blank {
+    width: 22px;
+    height: 22px;
+}

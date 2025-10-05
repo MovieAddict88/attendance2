@@ -89,34 +89,58 @@ $result_unassigned_students = $conn->query($sql_unassigned_students);
                 <?php endif; ?>
 
                 <h4>Enrolled Students</h4>
-                <div class="table-container">
+                <div class="table-container attendance-table">
+                    <h3 style="text-align:center;">SCHOOL FORM 2 (SF2) - DAILY ATTENDANCE REPORT OF LEARNERS</h3>
                     <table>
                         <thead>
                             <tr>
-                                <th>ID Number</th>
-                                <th>Full Name</th>
-                                <th>Address</th>
-                                <th>Email</th>
-                                <th>Contact Number</th>
+                                <th rowspan="2">No.</th>
+                                <th rowspan="2" class="name-col">LEARNER'S NAME<br><span class="small">(Last Name, First Name, Middle Name)</span></th>
+                                <th rowspan="2">SEX</th>
+                                <th colspan="31">Days of the Month</th>
+                                <th rowspan="2">TOTAL<br>PRESENT</th>
+                                <th rowspan="2">TOTAL<br>ABSENT</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <!-- Weekday headers (adjust based on actual month) -->
+                                <th>M</th><th>T</th><th>W</th><th>TH</th><th>F</th>
+                                <th>M</th><th>T</th><th>W</th><th>TH</th><th>F</th>
+                                <th>M</th><th>T</th><th>W</th><th>TH</th><th>F</th>
+                                <th>M</th><th>T</th><th>W</th><th>TH</th><th>F</th>
+                                <th>M</th><th>T</th><th>W</th><th>TH</th><th>F</th>
+                                <th colspan="6"></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ($result_students->num_rows > 0): ?>
+                                <?php $count = 1; ?>
                                 <?php while($row = $result_students->fetch_assoc()): ?>
                                     <tr>
-                                        <td data-label="ID Number"><?php echo $row['id']; ?></td>
-                                        <td data-label="Full Name"><?php echo htmlspecialchars($row['full_name']); ?></td>
-                                        <td data-label="Address"><?php echo htmlspecialchars($row['address']); ?></td>
-                                        <td data-label="Email"><?php echo htmlspecialchars($row['email']); ?></td>
-                                        <td data-label="Contact Number"><?php echo htmlspecialchars($row['phone']); ?></td>
+                                        <td><?php echo $count++; ?></td>
+                                        <td class="name-col"><?php echo htmlspecialchars($row['full_name']); ?></td>
+                                        <td></td>
+                                        <?php for ($i = 0; $i < 31; $i++): ?>
+                                            <td class="blank"></td>
+                                        <?php endfor; ?>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5">No students enrolled in this class yet.</td>
+                                    <td colspan="37">No students enrolled in this class yet.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
+                    </table>
+                    <br>
+                    <table style="width:100%; border:1px solid black;">
+                        <tr>
+                            <td style="width:50%; padding:8px;">Prepared by:<br><br><b>__________________________</b><br><small>Class Adviser</small></td>
+                            <td style="width:50%; padding:8px;">Checked by:<br><br><b>__________________________</b><br><small>School Head</small></td>
+                        </tr>
                     </table>
                 </div>
 
