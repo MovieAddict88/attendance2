@@ -7,9 +7,32 @@ if (!isset($_SESSION['admin_id'])) {
 
 include '../includes/database.php';
 
-// Fetch all teachers
-$sql = "SELECT * FROM teachers";
+// Fetch all teachers and their assignments
+$sql = "SELECT t.id, t.full_name, t.email, t.phone, g.grade_name, s.section_name, sub.subject_name
+        FROM teachers t
+        LEFT JOIN teacher_assignments ta ON t.id = ta.teacher_id
+        LEFT JOIN sections s ON ta.section_id = s.id
+        LEFT JOIN grades g ON s.grade_id = g.id
+        LEFT JOIN subjects sub ON ta.subject_id = sub.id
+        ORDER BY t.id";
 $result = $conn->query($sql);
+
+$teachers = [];
+while ($row = $result->fetch_assoc()) {
+    $teacher_id = $row['id'];
+    if (!isset($teachers[$teacher_id])) {
+        $teachers[$teacher_id] = [
+            'id' => $row['id'],
+            'full_name' => $row['full_name'],
+            'email' => $row['email'],
+            'phone' => $row['phone'],
+            'assignments' => []
+        ];
+    }
+    if ($row['grade_name']) {
+        $teachers[$teacher_id]['assignments'][] = $row['grade_name'] . ' - ' . $row['section_name'] . ' (' . $row['subject_name'] . ')';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,25 +58,35 @@ $result = $conn->query($sql);
                             <th>Full Name</th>
                             <th>Email</th>
                             <th>Phone</th>
-                            <th>Subject Taught</th>
+                            <th>Assignments</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while($row = $result->fetch_assoc()): ?>
+                        <?php if (!empty($teachers)): ?>
+                            <?php foreach ($teachers as $teacher): ?>
                                 <tr>
-                                    <td><?php echo $row['id']; ?></td>
-                                    <td><?php echo $row['full_name']; ?></td>
-                                    <td><?php echo $row['email']; ?></td>
-                                    <td><?php echo $row['phone']; ?></td>
-                                    <td><?php echo $row['subject_taught']; ?></td>
+                                    <td><?php echo $teacher['id']; ?></td>
+                                    <td><?php echo $teacher['full_name']; ?></td>
+                                    <td><?php echo $teacher['email']; ?></td>
+                                    <td><?php echo $teacher['phone']; ?></td>
                                     <td>
-                                        <a href="edit_teacher.php?id=<?php echo $row['id']; ?>" class="btn-edit">Edit</a>
-                                        <a href="delete_teacher.php?id=<?php echo $row['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');">Delete</a>
+                                        <?php if (!empty($teacher['assignments'])): ?>
+                                            <ul>
+                                                <?php foreach ($teacher['assignments'] as $assignment): ?>
+                                                    <li><?php echo $assignment; ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php else: ?>
+                                            No assignments.
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="edit_teacher.php?id=<?php echo $teacher['id']; ?>" class="btn-edit">Edit</a>
+                                        <a href="delete_teacher.php?id=<?php echo $teacher['id']; ?>" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');">Delete</a>
                                     </td>
                                 </tr>
-                            <?php endwhile; ?>
+                            <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
                                 <td colspan="6">No teachers found.</td>

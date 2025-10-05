@@ -11,7 +11,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = $_POST['full_name'];
     $email = $_POST['email'];
     $phone = $_POST['phone'];
-    $subject_taught = $_POST['subject_taught'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
     $profile_image = '';
@@ -27,17 +26,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 
-    $sql = "INSERT INTO teachers (full_name, email, phone, subject_taught, password, profile_image) VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssss", $full_name, $email, $phone, $subject_taught, $password, $profile_image);
+    $conn->begin_transaction();
 
-    if ($stmt->execute()) {
+    try {
+        $sql = "INSERT INTO teachers (full_name, email, phone, password, profile_image) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssss", $full_name, $email, $phone, $password, $profile_image);
+        $stmt->execute();
+        $teacher_id = $stmt->insert_id;
+
+        if (isset($_POST['assignments'])) {
+            $assignments = $_POST['assignments'];
+            $sql_assignment = "INSERT INTO teacher_assignments (teacher_id, section_id, subject_id) VALUES (?, ?, ?)";
+            $stmt_assignment = $conn->prepare($sql_assignment);
+
+            foreach ($assignments as $assignment) {
+                $section_id = $assignment['section'];
+                $subject_id = $assignment['subject'];
+                $stmt_assignment->bind_param("iii", $teacher_id, $section_id, $subject_id);
+                $stmt_assignment->execute();
+            }
+        }
+
+        $conn->commit();
         header("Location: manage_teachers.php");
         exit();
-    } else {
-        $error = "Error: " . $stmt->error;
+    } catch (Exception $e) {
+        $conn->rollback();
+        $error = "Error: " . $e->getMessage();
+        file_put_contents('add_teacher_errors.log', $e->getMessage() . PHP_EOL, FILE_APPEND);
     }
 }
+
+$sql_grades = "SELECT id, grade_name FROM grades";
+$result_grades = $conn->query($sql_grades);
+
+$sql_subjects = "SELECT id, subject_name FROM subjects";
+$result_subjects = $conn->query($sql_subjects);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,10 +97,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <input type="text" id="phone" name="phone">
                     </div>
                     <div class="input-group">
-                        <label for="subject_taught">Subject Taught</label>
-                        <input type="text" id="subject_taught" name="subject_taught">
-                    </div>
-                    <div class="input-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" required>
                     </div>
@@ -83,10 +104,84 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <label for="profile_image">Profile Image</label>
                         <input type="file" id="profile_image" name="profile_image">
                     </div>
+                    <div id="assignments-container">
+                        <h4>Assignments</h4>
+                        <div class="assignment">
+                            <select name="assignments[0][grade]" class="grade-select">
+                                <option value="">Select Grade</option>
+                                <?php while($row = $result_grades->fetch_assoc()): ?>
+                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['grade_name']; ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                            <select name="assignments[0][section]" class="section-select">
+                                <option value="">Select Section</option>
+                            </select>
+                            <select name="assignments[0][subject]">
+                                <option value="">Select Subject</option>
+                                <?php mysqli_data_seek($result_subjects, 0); ?>
+                                <?php while($row = $result_subjects->fetch_assoc()): ?>
+                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['subject_name']; ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" id="add-assignment">Add Another Assignment</button>
                     <button type="submit" class="btn">Add Teacher</button>
                 </form>
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let assignmentIndex = 1;
+            const container = document.getElementById('assignments-container');
+
+            document.getElementById('add-assignment').addEventListener('click', function() {
+                const newAssignment = document.createElement('div');
+                newAssignment.classList.add('assignment');
+                newAssignment.innerHTML = `
+                    <select name="assignments[${assignmentIndex}][grade]" class="grade-select">
+                        <option value="">Select Grade</option>
+                        <?php mysqli_data_seek($result_grades, 0); ?>
+                        <?php while($row = $result_grades->fetch_assoc()): ?>
+                            <option value="<?php echo $row['id']; ?>"><?php echo $row['grade_name']; ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                    <select name="assignments[${assignmentIndex}][section]" class="section-select">
+                        <option value="">Select Section</option>
+                    </select>
+                    <select name="assignments[${assignmentIndex}][subject]">
+                        <option value="">Select Subject</option>
+                        <?php mysqli_data_seek($result_subjects, 0); ?>
+                        <?php while($row = $result_subjects->fetch_assoc()): ?>
+                            <option value="<?php echo $row['id']; ?>"><?php echo $row['subject_name']; ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                `;
+                container.appendChild(newAssignment);
+                assignmentIndex++;
+            });
+
+            container.addEventListener('change', function(e) {
+                if (e.target.classList.contains('grade-select')) {
+                    const gradeId = e.target.value;
+                    const sectionSelect = e.target.nextElementSibling;
+                    sectionSelect.innerHTML = '<option value="">Loading...</option>';
+
+                    fetch(`get_sections.php?grade_id=${gradeId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            sectionSelect.innerHTML = '<option value="">Select Section</option>';
+                            data.forEach(section => {
+                                const option = document.createElement('option');
+                                option.value = section.id;
+                                option.textContent = section.section_name;
+                                sectionSelect.appendChild(option);
+                            });
+                        });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
