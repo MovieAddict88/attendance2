@@ -70,9 +70,38 @@ try {
     exit;
 }
 
-// --- Step 3: Create Initial Admin User ---
+// --- Step 3: Insert Default Permissions ---
 try {
-    echo "Step 5: Creating initial admin user...";
+    echo "Step 5: Inserting default permissions...";
+
+    // Define default permissions. Using INSERT IGNORE to prevent errors if they already exist.
+    $permissions_to_insert = ['view', 'edit', 'delete', 'owner'];
+    $stmt = $pdo->prepare("INSERT IGNORE INTO permissions (permission_name) VALUES (?)");
+
+    $inserted_count = 0;
+    foreach ($permissions_to_insert as $perm) {
+        $stmt->execute([$perm]);
+        if ($stmt->rowCount() > 0) {
+            $inserted_count++;
+        }
+    }
+
+    if ($inserted_count > 0) {
+        echo "OK ($inserted_count permissions inserted).\n";
+    } else {
+        echo "SKIPPED (Permissions likely already exist).\n";
+    }
+
+} catch (PDOException $e) {
+    echo "FAILED\n";
+    echo "Error: Could not insert default permissions.\n";
+    echo "Message: " . $e->getMessage() . "\n";
+    exit;
+}
+
+// --- Step 4: Create Initial Admin User ---
+try {
+    echo "Step 6: Creating initial admin user...";
 
     // Check if admin already exists
     $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
@@ -98,8 +127,8 @@ try {
     exit;
 }
 
-// --- Step 4: Create and Write config.php ---
-echo "Step 6: Preparing config.php file...";
+// --- Step 5: Create and Write config.php ---
+echo "Step 7: Preparing config.php file...";
 
 // Auto-detect Base URL
 $base_url = 'http://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['REQUEST_URI']), '/\\');
@@ -122,7 +151,7 @@ echo "OK\n";
 $config_dir = __DIR__ . '/config';
 $config_path = $config_dir . '/config.php';
 
-echo "Step 7: Writing config file to '$config_path'...";
+echo "Step 8: Writing config file to '$config_path'...";
 
 if (!is_dir($config_dir)) {
     if (!@mkdir($config_dir, 0755, true)) {

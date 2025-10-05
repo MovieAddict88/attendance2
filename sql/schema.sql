@@ -35,3 +35,21 @@ CREATE TABLE IF NOT EXISTS `documents` (
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`folder_id`) REFERENCES `folders`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Permissions table to define different access levels
+CREATE TABLE IF NOT EXISTS `permissions` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `permission_name` VARCHAR(100) UNIQUE NOT NULL COMMENT 'e.g., view, edit, delete, owner'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- User_Permissions table to link users, documents, and permissions
+CREATE TABLE IF NOT EXISTS `user_permissions` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `document_id` INT NOT NULL,
+  `permission_id` INT NOT NULL,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`document_id`) REFERENCES `documents`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`permission_id`) REFERENCES `permissions`(`id`) ON DELETE CASCADE,
+  UNIQUE KEY `user_document_permission` (`user_id`, `document_id`, `permission_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

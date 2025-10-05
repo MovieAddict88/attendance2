@@ -53,6 +53,7 @@ if (isset($_FILES['fileToUpload']) && $_FILES['fileToUpload']['error'] === UPLOA
         // --- Store File Metadata in Database ---
         try {
             $pdo = get_db_connection();
+            $pdo->beginTransaction();
 
             // Handle folder_id from the form
             $folder_id = !empty($_POST['folder_id']) ? (int)$_POST['folder_id'] : null;
@@ -62,7 +63,8 @@ if (isset($_FILES['fileToUpload']) && $_FILES['fileToUpload']['error'] === UPLOA
                 $stmt = $pdo->prepare("SELECT id FROM folders WHERE id = ? AND user_id = ?");
                 $stmt->execute([$folder_id, $user_id]);
                 if ($stmt->fetch() === false) {
-                    // Invalid folder, treat as an error and do not save the file.
+                    // Invalid folder, rollback and treat as an error.
+                    $pdo->rollBack();
                     unlink($target_file);
                     $_SESSION['error_message'] = "Invalid target folder specified.";
                     header("Location: {$base_url}/dashboard");
@@ -70,15 +72,45 @@ if (isset($_FILES['fileToUpload']) && $_FILES['fileToUpload']['error'] === UPLOA
                 }
             }
 
+            // Insert document metadata
             $stmt = $pdo->prepare(
                 "INSERT INTO documents (name, file_path, file_size, file_type, user_id, folder_id) VALUES (?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute([$final_filename, "storage/uploads/user_{$user_id}/" . $final_filename, $file_size, $file_type, $user_id, $folder_id]);
+            $document_id = $pdo->lastInsertId();
+
+            // Get the 'owner' permission ID
+            $perm_stmt = $pdo->prepare("SELECT id FROM permissions WHERE permission_name = 'owner'");
+            $perm_stmt->execute();
+            $permission = $perm_stmt->fetch();
+
+            if ($permission) {
+                $permission_id = $permission['id'];
+
+                // Assign 'owner' permission to the uploader
+                $user_perm_stmt = $pdo->prepare(
+                    "INSERT INTO user_permissions (user_id, document_id, permission_id) VALUES (?, ?, ?)"
+                );
+                $user_perm_stmt->execute([$user_id, $document_id, $permission_id]);
+            } else {
+                // If 'owner' permission is not found, roll back and report error.
+                $pdo->rollBack();
+                unlink($target_file);
+                $_SESSION['error_message'] = "Critical setup error: 'owner' permission not found. Please run setup.";
+                header("Location: {$base_url}/dashboard");
+                exit;
+            }
+
+            $pdo->commit();
 
             $_SESSION['success_message'] = "The file " . htmlspecialchars($final_filename) . " has been uploaded.";
 
         } catch (PDOException $e) {
-            // If DB insert fails, delete the uploaded file to prevent orphaned files.
+            // If in a transaction, roll it back.
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            // If DB operations fail, delete the uploaded file to prevent orphaned files.
             unlink($target_file);
             $_SESSION['error_message'] = "Database error: Could not save file metadata. " . $e->getMessage();
         }

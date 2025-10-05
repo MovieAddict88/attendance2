@@ -24,9 +24,12 @@ try {
     $pdo = get_db_connection();
 
     // --- Fetch Document and Verify Permissions ---
-    // We must join with the users table to ensure the document belongs to the logged-in user.
+    // Check if the user has any permission for this document (view, edit, owner, etc.).
+    // This is more flexible than just checking the owner (documents.user_id).
     $stmt = $pdo->prepare(
-        "SELECT * FROM documents WHERE id = ? AND user_id = ?"
+        "SELECT d.* FROM documents d
+         JOIN user_permissions up ON d.id = up.document_id
+         WHERE d.id = ? AND up.user_id = ?"
     );
     $stmt->execute([$document_id, $user_id]);
     $document = $stmt->fetch();

@@ -27,27 +27,36 @@ try {
     if ($type === 'document') {
         // --- Delete a Document ---
 
-        // First, find the document to ensure it belongs to the current user and get its file path.
-        $stmt = $pdo->prepare("SELECT file_path FROM documents WHERE id = ? AND user_id = ?");
+        // Check if the user has 'delete' or 'owner' permission for this document.
+        $stmt = $pdo->prepare(
+            "SELECT d.file_path FROM documents d
+             JOIN user_permissions up ON d.id = up.document_id
+             JOIN permissions p ON up.permission_id = p.id
+             WHERE d.id = ?
+               AND up.user_id = ?
+               AND p.permission_name IN ('delete', 'owner')"
+        );
         $stmt->execute([$id, $user_id]);
         $document = $stmt->fetch();
 
         if ($document) {
-            // Document found, proceed with deletion.
-            $file_path_on_disk = BASE_PATH . '/storage/uploads/' . $document['file_path'];
+            // Document and permissions found, proceed with deletion.
+            // Construct the full, absolute path to the file.
+            $file_path_on_disk = BASE_PATH . '/' . $document['file_path'];
 
             // 1. Delete the physical file.
+            // It's good practice to suppress errors with @ in case the file is already gone.
             if (file_exists($file_path_on_disk)) {
-                unlink($file_path_on_disk);
+                @unlink($file_path_on_disk);
             }
 
-            // 2. Delete the database record.
+            // 2. Delete the database record. The ON DELETE CASCADE will handle user_permissions.
             $delete_stmt = $pdo->prepare("DELETE FROM documents WHERE id = ?");
             $delete_stmt->execute([$id]);
 
             $_SESSION['success_message'] = "File deleted successfully.";
         } else {
-            // Document not found or doesn't belong to the user.
+            // Document not found or user lacks 'delete'/'owner' permission.
             $_SESSION['error_message'] = "File not found or you do not have permission to delete it.";
         }
 
@@ -70,9 +79,9 @@ try {
 
             // Delete all associated physical files.
             foreach ($documents_in_folder as $doc) {
-                $file_path_on_disk = BASE_PATH . '/storage/uploads/' . $doc['file_path'];
+                $file_path_on_disk = BASE_PATH . '/' . $doc['file_path'];
                 if (file_exists($file_path_on_disk)) {
-                    unlink($file_path_on_disk);
+                    @unlink($file_path_on_disk);
                 }
             }
 
