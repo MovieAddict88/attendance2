@@ -71,7 +71,46 @@ $month = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
 $week = isset($_GET['week']) ? (int)$_GET['week'] : 1;
 
+// Boundary checks for year to keep it within 2010-2030
+if ($year < 2010) $year = 2010;
+if ($year > 2030) $year = 2030;
+
 $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+$total_weeks = ceil($days_in_month / 7);
+
+// Ensure week is valid for the given month, cap if necessary
+if ($week < 1) $week = 1;
+if ($week > $total_weeks) $week = $total_weeks;
+
+// --- Navigation Logic ---
+// Next Week Calculation
+$next_week_week = $week + 1;
+$next_week_month = $month;
+$next_week_year = $year;
+if ($next_week_week > $total_weeks) {
+    $next_week_week = 1;
+    $next_week_month++;
+    if ($next_week_month > 12) {
+        $next_week_month = 1;
+        $next_week_year++;
+    }
+}
+
+// Previous Week Calculation
+$prev_week_week = $week - 1;
+$prev_week_month = $month;
+$prev_week_year = $year;
+if ($prev_week_week < 1) {
+    $prev_week_month--;
+    if ($prev_week_month < 1) {
+        $prev_week_month = 12;
+        $prev_week_year--;
+    }
+    $prev_month_days = cal_days_in_month(CAL_GREGORIAN, $prev_week_month, $prev_week_year);
+    $prev_week_week = ceil($prev_month_days / 7);
+}
+
+// --- Date Calculation for Display ---
 $date = new DateTime("$year-$month-01");
 $month_name = $date->format('F');
 
@@ -88,25 +127,6 @@ for ($i = 0; $i < 5; $i++) { // Monday to Friday
     $week_dates[] = clone $date;
     $date->modify('+1 day');
 }
-
-// Navigation links
-$prev_week = $week - 1;
-$next_week = $week + 1;
-$prev_month = $month - 1;
-$next_month = $month + 1;
-$prev_year = $year;
-$next_year = $year;
-
-if ($prev_month == 0) {
-    $prev_month = 12;
-    $prev_year--;
-}
-if ($next_month == 13) {
-    $next_month = 1;
-    $next_year++;
-}
-
-$total_weeks = ceil($days_in_month / 7);
 
 ?>
 <!DOCTYPE html>
@@ -148,9 +168,9 @@ $total_weeks = ceil($days_in_month / 7);
                 <div class="table-container attendance-table">
                     <h3 style="text-align:center;">SCHOOL FORM 2 (SF2) - DAILY ATTENDANCE REPORT OF LEARNERS</h3>
                     <div class="attendance-nav">
-                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $month; ?>&year=<?php echo $year; ?>&week=<?php echo $prev_week; ?>" <?php if ($week <= 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
+                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_week_month; ?>&year=<?php echo $prev_week_year; ?>&week=<?php echo $prev_week_week; ?>" <?php if ($year <= 2010 && $month == 1 && $week == 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
                         <span><?php echo "$month_name $year - Week $week"; ?></span>
-                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $month; ?>&year=<?php echo $year; ?>&week=<?php echo $next_week; ?>" <?php if ($week >= $total_weeks) echo 'style="visibility: hidden;"'; ?>>Next Week &raquo;</a>
+                        <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $next_week_month; ?>&year=<?php echo $next_week_year; ?>&week=<?php echo $next_week_week; ?>" <?php if ($next_week_year > 2030) echo 'style="visibility: hidden;"'; ?>>Next Week &raquo;</a>
                     </div>
                     <table>
                         <thead>
