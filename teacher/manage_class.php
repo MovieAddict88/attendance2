@@ -121,6 +121,7 @@ if (!empty($month_dates)) {
     <title>Manage Class</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/sf2-header.css">
+    <link rel="stylesheet" href="/css/print.css" media="print">
     <style>
         /* General Styles */
         .attendance-controls {
@@ -228,56 +229,6 @@ if (!empty($month_dates)) {
             font-size: 0.9em;
         }
         .btn-edit:hover { background-color: #1976D2; }
-
-        /* Print Styles */
-        @media print {
-            body {
-                font-size: 10pt;
-            }
-            .dashboard-container {
-                display: block;
-                width: 100%;
-            }
-            .main-content, .content-area {
-                width: 100%;
-                padding: 0;
-                margin: 0;
-            }
-            .sf2-sheet {
-                box-shadow: none;
-                border: none;
-            }
-            .attendance-controls, .add-students-form, .btn-edit, .sf2-top-row .sf2-logo, .dashboard-container > .header {
-                display: none !important; /* Hide controls and other non-essential elements */
-            }
-            .table-container-scrollable {
-                overflow-x: visible; /* Show all columns when printing */
-                max-width: none;
-                border: none;
-            }
-            .attendance-table-monthly {
-                width: 100%; /* Or 'auto' to fit content */
-                table-layout: auto;
-            }
-            .sticky-col, .total-col, .action-col {
-                position: static; /* Remove sticky positioning for print */
-                left: auto;
-                right: auto;
-                background-color: #fff; /* Ensure background is consistent */
-            }
-             .attendance-table-monthly th,
-            .attendance-table-monthly td {
-                padding: 4px; /* Reduce padding for print */
-                font-size: 9pt;
-            }
-            .name-col {
-                min-width: 150px; /* Adjust min-width for print */
-            }
-             @page {
-                size: landscape; /* Use landscape orientation */
-                margin: 0.5in;
-            }
-        }
     </style>
 </head>
 <body>
@@ -377,6 +328,7 @@ if (!empty($month_dates)) {
                             <button id="scroll-prev-week">&lsaquo; Prev Week</button>
                             <button id="scroll-next-week">Next Week &rsaquo;</button>
                         </div>
+                        <button id="print-button" class="btn" style="margin-left: 10px;">Print</button>
                     </div>
                     <div class="table-container-scrollable" id="attendance-table-container">
                         <table class="attendance-table-monthly">
@@ -486,6 +438,14 @@ if (!empty($month_dates)) {
         const prevWeekBtn = document.getElementById('scroll-prev-week');
         const nextWeekBtn = document.getElementById('scroll-next-week');
         const dayHeaders = document.querySelectorAll('.day-header');
+        const printBtn = document.getElementById('print-button');
+
+        // --- Print Button Logic ---
+        if (printBtn) {
+            printBtn.addEventListener('click', function () {
+                window.print();
+            });
+        }
 
         // --- Attendance Cell Click Logic ---
         document.querySelectorAll('.attendance-cell').forEach(cell => {
