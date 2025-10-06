@@ -328,7 +328,10 @@ if (!empty($month_dates)) {
                             <button id="scroll-prev-week">&lsaquo; Prev Week</button>
                             <button id="scroll-next-week">Next Week &rsaquo;</button>
                         </div>
-                        <button id="print-button" class="btn" style="margin-left: 10px;">Print</button>
+                        <div>
+                            <button id="print-button" class="btn">Print</button>
+                            <a href="../export/sf2_export.php?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $month; ?>&year=<?php echo $year; ?>" class="btn" style="text-decoration: none;" target="_blank">Export to CSV</a>
+                        </div>
                     </div>
                     <div class="table-container-scrollable" id="attendance-table-container">
                         <table class="attendance-table-monthly">
