@@ -53,6 +53,15 @@ foreach ($statusCounts as $row) {
 <div class="container">
     <h2>Admin Panel</h2>
 
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="admin.php">Dashboard</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="rentals.php">Rentals</a>
+        </li>
+    </ul>
+
     <!-- Charts -->
     <div class="row mb-4">
         <div class="col-md-6">

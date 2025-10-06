@@ -89,6 +89,25 @@ class Car
         return false;
     }
 
+    function updateStatus()
+    {
+        $query = "UPDATE " . $this->table_name . " SET status = ? WHERE id = ?";
+
+        $stmt = $this->conn->prepare($query);
+
+        // sanitize
+        $this->status = htmlspecialchars(strip_tags($this->status));
+        $this->id = htmlspecialchars(strip_tags($this->id));
+
+        $stmt->bind_param("si", $this->status, $this->id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+
+        return false;
+    }
+
     function readOne()
     {
         $query = "SELECT name, image, price, status FROM " . $this->table_name . " WHERE id = ? LIMIT 0,1";
