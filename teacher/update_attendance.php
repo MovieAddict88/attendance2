@@ -56,42 +56,48 @@ if (!$stmt) {
 $stmt->bind_param("iiiss", $student_id, $subject_id, $teacher_id, $class_date, $final_status);
 
 if ($stmt->execute()) {
-    // After a successful update, fetch the new weekly totals for the student
-    $date_obj = new DateTime($class_date);
-    $day_of_week = $date_obj->format('N'); // 1 (Mon) to 7 (Sun)
+    // After a successful update, fetch the new monthly totals for the student
+    $month = $data['month'] ?? date('m');
+    $year = $data['year'] ?? date('Y');
 
-    // Find the Monday of the week
-    $start_of_week = clone $date_obj;
-    $start_of_week->modify('-' . ($day_of_week - 1) . ' days');
+    // Calculate start and end dates of the month
+    $start_date = new DateTime("$year-$month-01");
+    $end_date = clone $start_date;
+    $end_date->modify('last day of this month');
 
-    // Find the Friday of the week
-    $end_of_week = clone $start_of_week;
-    $end_of_week->modify('+4 days');
+    $start_date_str = $start_date->format('Y-m-d');
+    $end_date_str = $end_date->format('Y-m-d');
 
-    $start_date_str = $start_of_week->format('Y-m-d');
-    $end_date_str = $end_of_week->format('Y-m-d');
+    // Calculate the number of school days (weekdays) in the month
+    $total_school_days_in_month = 0;
+    $current_date = clone $start_date;
+    while ($current_date <= $end_date) {
+        if ((int)$current_date->format('N') < 6) { // 1 (Mon) to 5 (Fri)
+            $total_school_days_in_month++;
+        }
+        $current_date->modify('+1 day');
+    }
 
-    $sql_weekly_summary = "
+    // Fetch the summary for the entire month
+    $sql_monthly_summary = "
         SELECT
             SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
             SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent
         FROM attendance
         WHERE student_id = ? AND subject_id = ? AND class_date BETWEEN ? AND ?
     ";
-    $stmt_summary = $conn->prepare($sql_weekly_summary);
+    $stmt_summary = $conn->prepare($sql_monthly_summary);
     $stmt_summary->bind_param("iiss", $student_id, $subject_id, $start_date_str, $end_date_str);
     $stmt_summary->execute();
     $result_summary = $stmt_summary->get_result();
     $summary = $result_summary->fetch_assoc();
 
-    $total_present = $summary['total_present'] ?? 0;
-    $total_absent = $summary['total_absent'] ?? 0;
+    $total_present = (int)($summary['total_present'] ?? 0);
+    $total_absent = (int)($summary['total_absent'] ?? 0);
     $remarks = '';
 
-    // There are always 5 school days in the week view
-    $total_school_days_in_week = 5;
-    if ($total_school_days_in_week > 0) {
-        $percentage = ($total_present / $total_school_days_in_week) * 100;
+    if ($total_school_days_in_month > 0) {
+        $percentage = ($total_present / $total_school_days_in_month) * 100;
         $remarks = number_format($percentage, 2) . '%';
     }
 

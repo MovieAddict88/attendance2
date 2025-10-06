@@ -52,70 +52,46 @@ $result_unassigned_students = $conn->query($sql_unassigned_students);
 // --- Attendance Sheet Logic ---
 $month = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
-$week = isset($_GET['week']) ? (int)$_GET['week'] : 1;
 
-// Boundary checks for year to keep it within 2010-2030
+// Boundary checks for year to keep it within a reasonable range
 if ($year < 2010) $year = 2010;
 if ($year > 2030) $year = 2030;
 
-$days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-$total_weeks = ceil($days_in_month / 7);
+// --- Navigation Logic for Month ---
+$current_date = new DateTime("$year-$month-01");
+$month_name = $current_date->format('F');
 
-// Ensure week is valid for the given month, cap if necessary
-if ($week < 1) $week = 1;
-if ($week > $total_weeks) $week = $total_weeks;
+// Previous Month Calculation
+$prev_month_date = clone $current_date;
+$prev_month_date->modify('-1 month');
+$prev_month = $prev_month_date->format('m');
+$prev_year = $prev_month_date->format('Y');
 
-// --- Navigation Logic ---
-// Next Week Calculation
-$next_week_week = $week + 1;
-$next_week_month = $month;
-$next_week_year = $year;
-if ($next_week_week > $total_weeks) {
-    $next_week_week = 1;
-    $next_week_month++;
-    if ($next_week_month > 12) {
-        $next_week_month = 1;
-        $next_week_year++;
-    }
-}
+// Next Month Calculation
+$next_month_date = clone $current_date;
+$next_month_date->modify('+1 month');
+$next_month = $next_month_date->format('m');
+$next_year = $next_month_date->format('Y');
 
-// Previous Week Calculation
-$prev_week_week = $week - 1;
-$prev_week_month = $month;
-$prev_week_year = $year;
-if ($prev_week_week < 1) {
-    $prev_week_month--;
-    if ($prev_week_month < 1) {
-        $prev_week_month = 12;
-        $prev_week_year--;
-    }
-    $prev_month_days = cal_days_in_month(CAL_GREGORIAN, $prev_week_month, $prev_week_year);
-    $prev_week_week = ceil($prev_month_days / 7);
-}
 
 // --- Date Calculation for Display ---
-$date = new DateTime("$year-$month-01");
-$month_name = $date->format('F');
-
-// Calculate week start and end dates
-$week_start_day = 1 + (($week - 1) * 7);
-$date->setDate($year, $month, $week_start_day);
-
-// Find the first Monday for the week view
-$day_of_week = $date->format('N'); // 1 (for Monday) through 7 (for Sunday)
-$date->modify('-' . ($day_of_week - 1) . ' days');
-
-$week_dates = [];
-for ($i = 0; $i < 5; $i++) { // Monday to Friday
-    $week_dates[] = clone $date;
-    $date->modify('+1 day');
+$days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+$month_dates = [];
+for ($day = 1; $day <= $days_in_month; $day++) {
+    $date = new DateTime("$year-$month-$day");
+    // We only care about weekdays for attendance
+    if ((int)$date->format('N') < 6) { // 1 (Mon) to 5 (Fri)
+        $month_dates[] = $date;
+    }
 }
 
-// --- Fetch Attendance Data ---
+
+// --- Fetch Attendance Data for the Entire Month ---
 $attendance_data = [];
-if (!empty($week_dates)) {
-    $start_date = $week_dates[0]->format('Y-m-d');
-    $end_date = end($week_dates)->format('Y-m-d');
+if (!empty($month_dates)) {
+    // Get the first and last day of the month for the query
+    $start_date = (new DateTime("$year-$month-01"))->format('Y-m-d');
+    $end_date = (new DateTime("$year-$month-$days_in_month"))->format('Y-m-d');
 
     $sql_attendance = "
         SELECT student_id, class_date, status
@@ -146,11 +122,18 @@ if (!empty($week_dates)) {
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/sf2-header.css">
     <style>
-        .attendance-nav {
+        /* General Styles */
+        .attendance-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .attendance-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .attendance-nav a, .attendance-nav span {
             padding: 8px 15px;
@@ -158,20 +141,84 @@ if (!empty($week_dates)) {
             background-color: #f0f0f0;
             border-radius: 5px;
         }
+        .week-nav-buttons button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .week-nav-buttons button:hover {
+            background-color: #0056b3;
+        }
+        .week-nav-buttons button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Scrollable Table Styles */
+        .table-container-scrollable {
+            overflow-x: auto;
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .attendance-table-monthly {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+        .attendance-table-monthly th,
+        .attendance-table-monthly td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            min-width: 55px; /* Ensure days have a minimum width */
+        }
+        .attendance-table-monthly th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .sticky-col {
+            position: -webkit-sticky; /* For Safari */
+            position: sticky;
+            left: 0;
+            background-color: #fff;
+            z-index: 10;
+        }
+        .sticky-col.name-col {
+            left: 55px; /* Adjust based on the width of the 'No.' column */
+            min-width: 250px;
+        }
+        .sticky-col:nth-child(3) {
+            left: 305px; /* Adjust based on previous columns' widths */
+        }
+        .total-col, .action-col {
+            position: -webkit-sticky;
+            position: sticky;
+            background-color: #fff; /* Match row background */
+            z-index: 10;
+        }
+
+        /* Set right positions for the sticky columns from the right */
+        .action-col { right: 0; }
+        .total-remarks { right: 60px; } /* Approximate width of Actions column */
+        .total-absent { right: 145px; }  /* Width of Actions + Remarks */
+        .total-present { right: 230px; } /* Width of Actions + Remarks + Absent */
+
+
+        /* Cell Styles */
         .attendance-cell {
             cursor: pointer;
-            text-align: center;
             vertical-align: middle;
             font-size: 1.5em;
-            width: 50px;
             height: 50px;
         }
-        .attendance-cell.present {
-            color: green;
-        }
-        .attendance-cell.absent {
-            color: red;
-        }
+        .attendance-cell.present { color: green; }
+        .attendance-cell.absent { color: red; }
+
         .btn-edit {
             padding: 5px 10px;
             background-color: #2196F3;
@@ -180,8 +227,56 @@ if (!empty($week_dates)) {
             border-radius: 3px;
             font-size: 0.9em;
         }
-        .btn-edit:hover {
-            background-color: #1976D2;
+        .btn-edit:hover { background-color: #1976D2; }
+
+        /* Print Styles */
+        @media print {
+            body {
+                font-size: 10pt;
+            }
+            .dashboard-container {
+                display: block;
+                width: 100%;
+            }
+            .main-content, .content-area {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            .sf2-sheet {
+                box-shadow: none;
+                border: none;
+            }
+            .attendance-controls, .add-students-form, .btn-edit, .sf2-top-row .sf2-logo, .dashboard-container > .header {
+                display: none !important; /* Hide controls and other non-essential elements */
+            }
+            .table-container-scrollable {
+                overflow-x: visible; /* Show all columns when printing */
+                max-width: none;
+                border: none;
+            }
+            .attendance-table-monthly {
+                width: 100%; /* Or 'auto' to fit content */
+                table-layout: auto;
+            }
+            .sticky-col, .total-col, .action-col {
+                position: static; /* Remove sticky positioning for print */
+                left: auto;
+                right: auto;
+                background-color: #fff; /* Ensure background is consistent */
+            }
+             .attendance-table-monthly th,
+            .attendance-table-monthly td {
+                padding: 4px; /* Reduce padding for print */
+                font-size: 9pt;
+            }
+            .name-col {
+                min-width: 150px; /* Adjust min-width for print */
+            }
+             @page {
+                size: landscape; /* Use landscape orientation */
+                margin: 0.5in;
+            }
         }
     </style>
 </head>
@@ -272,28 +367,33 @@ if (!empty($week_dates)) {
                             <div class="value" id="district"><?php echo $division; ?></div>
                         </div>
                     </div>
-                    <div class="table-container attendance-table">
+                    <div class="attendance-controls">
                         <div class="attendance-nav">
-                            <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_week_month; ?>&year=<?php echo $prev_week_year; ?>&week=<?php echo $prev_week_week; ?>" <?php if ($year <= 2010 && $month == 1 && $week == 1) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Week</a>
-                            <span><?php echo "$month_name $year - Week $week"; ?></span>
-                            <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $next_week_month; ?>&year=<?php echo $next_week_year; ?>&week=<?php echo $next_week_week; ?>" <?php if ($next_week_year > 2030) echo 'style="visibility: hidden;"'; ?>>Next Week &raquo;</a>
+                             <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $prev_month; ?>&year=<?php echo $prev_year; ?>" <?php if ($prev_year < 2010) echo 'style="visibility: hidden;"'; ?>>&laquo; Previous Month</a>
+                            <span><?php echo "$month_name $year"; ?></span>
+                            <a href="?section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>&month=<?php echo $next_month; ?>&year=<?php echo $next_year; ?>" <?php if ($next_year > 2030) echo 'style="visibility: hidden;"'; ?>>Next Month &raquo;</a>
                         </div>
-                        <table>
+                        <div class="week-nav-buttons">
+                            <button id="scroll-prev-week">&lsaquo; Prev Week</button>
+                            <button id="scroll-next-week">Next Week &rsaquo;</button>
+                        </div>
+                    </div>
+                    <div class="table-container-scrollable" id="attendance-table-container">
+                        <table class="attendance-table-monthly">
                             <thead>
                                 <tr>
-                                    <th rowspan="2">No.</th>
-                                    <th rowspan="2" class="name-col">LEARNER'S NAME<br><span class="small">(Last Name, First Name, Middle Name)</span></th>
-                                    <th rowspan="2">SEX</th>
-                                    <th colspan="5">Days of the Week</th>
-                                    <th rowspan="2">TOTAL<br>PRESENT</th>
-                                    <th rowspan="2">TOTAL<br>ABSENT</th>
-                                    <th rowspan="2">REMARKS</th>
-                                    <th rowspan="2">ACTIONS</th>
-                                </tr>
-                                <tr>
-                                    <?php foreach ($week_dates as $d): ?>
-                                        <th><?php echo $d->format('D') . '<br>' . $d->format('j'); ?></th>
+                                    <th class="sticky-col">No.</th>
+                                    <th class="sticky-col name-col">LEARNER'S NAME<br><span class="small">(Last Name, First Name, Middle Name)</span></th>
+                                    <th class="sticky-col">SEX</th>
+                                    <?php foreach ($month_dates as $d): ?>
+                                        <th class="day-header" data-date="<?php echo $d->format('Y-m-d'); ?>">
+                                            <?php echo $d->format('D') . '<br>' . $d->format('j'); ?>
+                                        </th>
                                     <?php endforeach; ?>
+                                    <th class="total-col total-present">TOTAL<br>PRESENT</th>
+                                    <th class="total-col total-absent">TOTAL<br>ABSENT</th>
+                                    <th class="total-col total-remarks">REMARKS</th>
+                                    <th class="action-col">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -301,8 +401,8 @@ if (!empty($week_dates)) {
                                     <?php $count = 1; ?>
                                     <?php while($row = $result_students->fetch_assoc()): ?>
                                         <tr>
-                                            <td><?php echo $count++; ?></td>
-                                            <td class="name-col">
+                                            <td class="sticky-col"><?php echo $count++; ?></td>
+                                            <td class="sticky-col name-col">
                                                 <?php
                                                     $name_parts = [$row['last_name'] . ',', $row['first_name']];
                                                     if (!empty(trim($row['middle_name']))) {
@@ -312,15 +412,21 @@ if (!empty($week_dates)) {
                                                     echo $full_name;
                                                 ?>
                                             </td>
-                                            <td><?php echo htmlspecialchars(strtoupper(substr($row['sex'], 0, 1))); ?></td>
-                                            <?php foreach ($week_dates as $d):
+                                            <td class="sticky-col"><?php echo htmlspecialchars(strtoupper(substr($row['sex'], 0, 1))); ?></td>
+                                            <?php
+                                                $total_present_month = 0;
+                                                $total_absent_month = 0;
+                                            ?>
+                                            <?php foreach ($month_dates as $d):
                                                 $date_str = $d->format('Y-m-d');
                                                 $status = $attendance_data[$row['id']][$date_str] ?? '';
                                                 $icon = '';
                                                 if ($status === 'present') {
                                                     $icon = '&#10004;'; // Checkmark
+                                                    $total_present_month++;
                                                 } else if ($status === 'absent') {
                                                     $icon = '&#10006;'; // X
+                                                    $total_absent_month++;
                                                 }
                                             ?>
                                                 <td class="attendance-cell <?php echo $status; ?>"
@@ -331,31 +437,17 @@ if (!empty($week_dates)) {
                                                 </td>
                                             <?php endforeach; ?>
                                             <?php
-                                                // Calculate totals for the current week's view
-                                                $total_present = 0;
-                                                $total_absent = 0;
-                                                foreach ($week_dates as $d) {
-                                                    $date_str = $d->format('Y-m-d');
-                                                    $status = $attendance_data[$row['id']][$date_str] ?? '';
-                                                    if ($status === 'present') {
-                                                        $total_present++;
-                                                    } else if ($status === 'absent') {
-                                                        $total_absent++;
-                                                    }
-                                                }
-
+                                                $total_school_days_in_month = count($month_dates);
                                                 $remarks = '';
-                                                // There are always 5 days in the week view (Mon-Fri)
-                                                $total_school_days_in_week = 5;
-                                                if ($total_school_days_in_week > 0) {
-                                                    $percentage = ($total_present / $total_school_days_in_week) * 100;
+                                                if ($total_school_days_in_month > 0) {
+                                                    $percentage = ($total_present_month / $total_school_days_in_month) * 100;
                                                     $remarks = number_format($percentage, 2) . '%';
                                                 }
                                             ?>
-                                            <td id="present-<?php echo $row['id']; ?>"><?php echo $total_present; ?></td>
-                                            <td id="absent-<?php echo $row['id']; ?>"><?php echo $total_absent; ?></td>
-                                            <td id="remarks-<?php echo $row['id']; ?>"><?php echo $remarks; ?></td>
-                                            <td>
+                                            <td id="present-<?php echo $row['id']; ?>" class="total-col total-present"><?php echo $total_present_month; ?></td>
+                                            <td id="absent-<?php echo $row['id']; ?>" class="total-col total-absent"><?php echo $total_absent_month; ?></td>
+                                            <td id="remarks-<?php echo $row['id']; ?>" class="total-col total-remarks"><?php echo $remarks; ?></td>
+                                            <td class="action-col">
                                                 <a href="edit_student.php?student_id=<?php echo $row['id']; ?>&section_id=<?php echo $section_id; ?>&subject_id=<?php echo $subject_id; ?>" class="btn-edit">Edit</a>
                                             </td>
                                         </tr>
@@ -363,7 +455,7 @@ if (!empty($week_dates)) {
                                     <?php $result_students->data_seek(0); // Reset result set pointer ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="11">No students enrolled in this class yet.</td>
+                                        <td colspan="<?php echo count($month_dates) + 7; ?>">No students enrolled in this class yet.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -390,74 +482,43 @@ if (!empty($week_dates)) {
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const subjectId = <?php echo json_encode($subject_id); ?>;
+        const container = document.getElementById('attendance-table-container');
+        const prevWeekBtn = document.getElementById('scroll-prev-week');
+        const nextWeekBtn = document.getElementById('scroll-next-week');
+        const dayHeaders = document.querySelectorAll('.day-header');
 
+        // --- Attendance Cell Click Logic ---
         document.querySelectorAll('.attendance-cell').forEach(cell => {
             cell.addEventListener('click', function () {
-                if (this.dataset.busy === 'true') {
-                    return;
-                }
+                if (this.dataset.busy === 'true') return;
                 this.dataset.busy = 'true';
 
                 const studentId = this.dataset.studentId;
                 const classDate = this.dataset.date;
                 let currentStatus = this.dataset.status;
-                let nextStatus;
+                let nextStatus = (currentStatus === '') ? 'present' : (currentStatus === 'present' ? 'absent' : '');
 
-                if (currentStatus === '') {
-                    nextStatus = 'present';
-                } else if (currentStatus === 'present') {
-                    nextStatus = 'absent';
-                } else {
-                    nextStatus = ''; // Back to neutral
-                }
+                updateUICell(this, nextStatus);
 
-                // Update UI immediately
-                this.dataset.status = nextStatus;
-                this.classList.remove('present', 'absent');
-                if (nextStatus === 'present') {
-                    this.innerHTML = '&#10004;'; // Checkmark
-                    this.classList.add('present');
-                } else if (nextStatus === 'absent') {
-                    this.innerHTML = '&#10006;'; // X
-                    this.classList.add('absent');
-                } else {
-                    this.innerHTML = '';
-                }
-
-                // Send data to the server
                 fetch('update_attendance.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         student_id: studentId,
                         subject_id: subjectId,
                         class_date: classDate,
-                        status: nextStatus
+                        status: nextStatus,
+                        month: <?php echo json_encode($month); ?>,
+                        year: <?php echo json_encode($year); ?>
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.totals) {
-                        // Update the totals in the table
-                        document.getElementById('present-' + studentId).textContent = data.totals.total_present;
-                        document.getElementById('absent-' + studentId).textContent = data.totals.total_absent;
-                        document.getElementById('remarks-' + studentId).textContent = data.totals.remarks;
+                        updateUITotals(studentId, data.totals);
                     } else {
-                        // Revert UI on failure
                         console.error('Failed to update attendance');
-                        this.dataset.status = currentStatus;
-                        this.classList.remove('present', 'absent');
-                        if (currentStatus === 'present') {
-                            this.innerHTML = '&#10004;';
-                            this.classList.add('present');
-                        } else if (currentStatus === 'absent') {
-                            this.innerHTML = '&#10006;';
-                            this.classList.add('absent');
-                        } else {
-                            this.innerHTML = '';
-                        }
+                        updateUICell(this, currentStatus); // Revert on failure
                     }
                 })
                 .catch(error => console.error('Error:', error))
@@ -466,6 +527,45 @@ if (!empty($week_dates)) {
                 });
             });
         });
+
+        function updateUICell(cell, status) {
+            cell.dataset.status = status;
+            cell.className = 'attendance-cell'; // Reset classes
+            if (status) cell.classList.add(status);
+            cell.innerHTML = (status === 'present') ? '&#10004;' : (status === 'absent' ? '&#10006;' : '');
+        }
+
+        function updateUITotals(studentId, totals) {
+            document.getElementById('present-' + studentId).textContent = totals.total_present;
+            document.getElementById('absent-' + studentId).textContent = totals.total_absent;
+            document.getElementById('remarks-' + studentId).textContent = totals.remarks;
+        }
+
+        // --- Week-by-Week Scrolling Logic ---
+        if (container && prevWeekBtn && nextWeekBtn && dayHeaders.length > 0) {
+            const dayCellWidth = dayHeaders[0].offsetWidth;
+            const scrollAmount = dayCellWidth * 5; // 5 days for a typical school week
+
+            function updateScrollButtons() {
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                prevWeekBtn.disabled = container.scrollLeft <= 0;
+                nextWeekBtn.disabled = container.scrollLeft >= maxScroll;
+            }
+
+            nextWeekBtn.addEventListener('click', () => {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            prevWeekBtn.addEventListener('click', () => {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            // Update buttons on initial load and on scroll
+            container.addEventListener('scroll', updateScrollButtons);
+            updateScrollButtons(); // Initial check
+             // Re-check on window resize as clientWidth might change
+            window.addEventListener('resize', updateScrollButtons);
+        }
     });
     </script>
 </body>
